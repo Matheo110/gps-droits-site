@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPS des Droits — Achats internationaux</title>
+<meta name="description" content="Clique ton pays sur le globe, puis celui du vendeur : découvre en un instant tes droits de consommateur pour un achat international, et génère une lettre de réclamation prête à envoyer.">
+<meta name="theme-color" content="#0b1220">
+<meta property="og:title" content="GPS des Droits — Achats internationaux">
+<meta property="og:description" content="Sache exactement ce que dit la loi sur ton achat à l'étranger. Globe interactif, droits par zone, générateur de lettre de réclamation.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1220'/%3E%3Ccircle cx='32' cy='27' r='15' fill='none' stroke='%23e0a94c' stroke-width='3.5'/%3E%3Ccircle cx='32' cy='27' r='4' fill='%232dd4bf'/%3E%3Cpath d='M32 44 L32 55' stroke='%23e0a94c' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -39,8 +45,29 @@
   .logo .dot{width:7px;height:7px;border-radius:50%;background:var(--teal); box-shadow:0 0 10px var(--teal);}
   .navlinks{display:flex; gap:28px; font-size:12px; letter-spacing:0.06em; font-family:'JetBrains Mono', monospace; color:var(--muted);}
   .navlinks a{text-decoration:none; transition:color .2s;}
-  .navlinks a:hover{color:var(--gold);}
-  @media (max-width:720px){ .navlinks{display:none;} .topnav{padding:16px 20px;} }
+  .navlinks a:hover, .navlinks a.active{color:var(--gold);}
+  .nav-toggle{
+    display:none; background:none; border:1px solid var(--line-soft); border-radius:5px;
+    width:38px; height:32px; cursor:pointer; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  }
+  .nav-toggle span{display:block; width:16px; height:1.5px; background:var(--ink); transition:transform .2s, opacity .2s;}
+  @media (max-width:720px){ .navlinks{display:none;} .topnav{padding:16px 20px;} .nav-toggle{display:flex;} }
+
+  .nav-scrim{
+    position:fixed; inset:0; background:rgba(6,9,16,0.6); z-index:44;
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .nav-scrim.show{opacity:1; pointer-events:all;}
+  .mobile-nav{
+    position:fixed; top:0; right:0; height:100vh; width:min(260px,80vw);
+    background:linear-gradient(180deg, rgba(19,27,46,0.98), rgba(11,18,32,0.99));
+    border-left:1px solid var(--line-soft); z-index:45; padding:100px 30px 40px;
+    transform:translateX(100%); transition:transform .4s cubic-bezier(.16,1,.3,1);
+    display:flex; flex-direction:column; gap:24px;
+  }
+  .mobile-nav.open{transform:translateX(0);}
+  .mobile-nav a{font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.06em; color:var(--muted); text-decoration:none;}
+  .mobile-nav a:hover, .mobile-nav a.active{color:var(--gold);}
 
   /* ---------- hero / globe ---------- */
   .hero{
@@ -273,6 +300,32 @@
 
   .disclaimer{position:relative; background:var(--bg2); border:1px solid var(--line-soft); padding:28px 32px; font-size:13px; color:var(--muted); line-height:1.7; font-weight:300; max-width:860px; overflow:hidden;}
   .disclaimer b{color:var(--ink); font-weight:600;}
+  .scroll-top{
+    position:fixed; bottom:26px; left:26px; z-index:30;
+    width:42px; height:42px; border-radius:50%; border:1px solid var(--line-soft);
+    background:rgba(11,18,32,0.75); backdrop-filter:blur(6px); color:var(--ink);
+    font-size:16px; cursor:pointer; opacity:0; pointer-events:none; transform:translateY(10px);
+    transition:opacity .3s ease, transform .3s ease, border-color .2s, color .2s;
+  }
+  .scroll-top.show{opacity:1; pointer-events:all; transform:translateY(0);}
+  .scroll-top:hover{border-color:var(--teal); color:var(--teal);}
+
+  /* subtle editorial grain, echoes the "dossier confidentiel" feel */
+  body::after{
+    content:''; position:fixed; inset:0; z-index:200; pointer-events:none;
+    opacity:0.035; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .reveal{transition:none !important; opacity:1 !important; transform:none !important;}
+    .eyebrow-cube{animation:none;}
+    .globe-hint .spin{animation:none;}
+    .tilt-card{transition:none;}
+    .rights-panel, .letter-overlay .letter-card, .mobile-nav, .scroll-top{transition-duration:0.01ms !important;}
+  }
+
   .disclaimer::before{
     content:'CONFIDENTIEL'; position:absolute; top:14px; right:-38px;
     background:transparent; color:var(--rose); border:2px solid var(--rose);
@@ -287,12 +340,20 @@
 <nav class="topnav">
   <div class="logo"><span class="dot"></span> GPS<em>des</em>Droits</div>
   <div class="navlinks">
-    <a href="#globe-anchor">LE GLOBE</a>
-    <a href="#comment">COMMENT ÇA MARCHE</a>
-    <a href="#zones">ZONES COUVERTES</a>
-    <a href="#faq">FAQ</a>
+    <a href="#globe-anchor" data-nav>LE GLOBE</a>
+    <a href="#comment" data-nav>COMMENT ÇA MARCHE</a>
+    <a href="#zones" data-nav>ZONES COUVERTES</a>
+    <a href="#faq" data-nav>FAQ</a>
   </div>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
 </nav>
+<div class="nav-scrim" id="nav-scrim"></div>
+<div class="mobile-nav" id="mobile-nav">
+  <a href="#globe-anchor" data-nav>LE GLOBE</a>
+  <a href="#comment" data-nav>COMMENT ÇA MARCHE</a>
+  <a href="#zones" data-nav>ZONES COUVERTES</a>
+  <a href="#faq" data-nav>FAQ</a>
+</div>
 
 <div class="hero" id="globe-anchor">
   <canvas id="globe-canvas"></canvas>
@@ -354,7 +415,10 @@
     <div class="field"><label>Produit concerné</label><input type="text" id="f-product" placeholder="Ex : paire d'écouteurs sans fil"></div>
     <button class="gen-btn" id="gen-btn">GÉNÉRER LA LETTRE</button>
     <div class="letter-output" id="letter-output"></div>
-    <button class="copy-btn" id="copy-btn">COPIER LE TEXTE</button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="copy-btn" id="copy-btn">COPIER LE TEXTE</button>
+      <button class="copy-btn" id="download-btn" style="border-color:var(--teal); color:var(--teal);">TÉLÉCHARGER .TXT</button>
+    </div>
   </div>
 </div>
 
@@ -450,6 +514,8 @@
   <span>Dossier n° 2026-EU-XB · Informations générales, pas un conseil juridique</span>
 </footer>
 
+<button class="scroll-top" id="scroll-top" aria-label="Retour en haut">↑</button>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* ============================================================
@@ -457,6 +523,7 @@
    voir tes droits. Textures Terre photoréalistes (NASA Blue
    Marble, via le pack d'exemples three.js sur CDN).
 ============================================================ */
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canvas = document.getElementById('globe-canvas');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
@@ -531,12 +598,16 @@ function loadTex(name, srgb){
   t.anisotropy = 4;
   return t;
 }
-const earthDayTex = loadTex('earth_atmos_2048.jpg', true);
+let earthLoaded = false;
+const earthDayTex = texLoader.load(TEX_BASE+'earth_atmos_2048.jpg', ()=>{ earthLoaded = true; });
+if(THREE.sRGBEncoding) earthDayTex.encoding = THREE.sRGBEncoding;
+earthDayTex.anisotropy = 4;
 const earthNormalTex = loadTex('earth_normal_2048.jpg', false);
 const earthSpecularTex = loadTex('earth_specular_2048.jpg', false);
 const earthLightsTex = loadTex('earth_lights_2048.png', true);
 const cloudTex = loadTex('earth_clouds_1024.png', false);
 
+const CLOUD_OPACITY = 0.4;
 const sphereGeo = new THREE.SphereGeometry(R, 96, 96);
 const sphereMat = new THREE.MeshPhongMaterial({
   map: earthDayTex,
@@ -547,14 +618,16 @@ const sphereMat = new THREE.MeshPhongMaterial({
   shininess: 14,
   emissiveMap: earthLightsTex,
   emissive: new THREE.Color(0xffddaa),
-  emissiveIntensity: 0.28
+  emissiveIntensity: 0.28,
+  transparent: true,
+  opacity: REDUCED_MOTION ? 1 : 0
 });
 const earthMesh = new THREE.Mesh(sphereGeo, sphereMat);
 globeGroup.add(earthMesh);
 
 const cloudMesh = new THREE.Mesh(
   new THREE.SphereGeometry(R*1.012, 64, 64),
-  new THREE.MeshLambertMaterial({map:cloudTex, alphaMap:cloudTex, transparent:true, opacity:0.4, depthWrite:false})
+  new THREE.MeshLambertMaterial({map:cloudTex, alphaMap:cloudTex, transparent:true, opacity: REDUCED_MOTION ? CLOUD_OPACITY : 0, depthWrite:false})
 );
 globeGroup.add(cloudMesh);
 
@@ -797,6 +870,11 @@ canvas.addEventListener('wheel', e=>{
   setZoomZ(cameraTargetZ + e.deltaY*0.012);
 }, {passive:false});
 
+// pour les raccourcis clavier +/- (zoom uniquement quand le curseur est sur le globe)
+let mouseOverGlobe = false;
+canvas.addEventListener('pointerenter', ()=>{ mouseOverGlobe = true; });
+canvas.addEventListener('pointerleave', ()=>{ mouseOverGlobe = false; });
+
 // pincement tactile (2 doigts) pour le zoom mobile/trackpad — uniquement sur le globe
 let pinchStartDist = null, pinchStartZ = 0;
 function touchDist(touches){
@@ -822,7 +900,7 @@ canvas.addEventListener('touchend', ()=>{ pinchStartDist = null; });
 
 function animate(t){
   const idleFor = performance.now() - lastInteraction;
-  if(!dragging && idleFor > 2200 && !(selection.origin && selection.dest)){
+  if(!REDUCED_MOTION && !dragging && idleFor > 2200 && !(selection.origin && selection.dest)){
     targetRotY += 0.0009;
   }
   rotY += (targetRotY-rotY)*0.06;
@@ -842,10 +920,12 @@ function animate(t){
   starsNear.position.x += (mouseParallaxX*0.7 - starsNear.position.x)*0.02;
   starsNear.position.y += (-mouseParallaxY*0.55 - starsNear.position.y)*0.02;
 
-  [starsDeep, starsFar, starsMid, starsNear].forEach(layer=>{
-    const tw = (Math.sin(t*0.0006 + layer.userData.twinklePhase)+1)/2;
-    layer.material.opacity = layer.userData.baseOpacity * (0.75 + tw*0.25);
-  });
+  if(!REDUCED_MOTION){
+    [starsDeep, starsFar, starsMid, starsNear].forEach(layer=>{
+      const tw = (Math.sin(t*0.0006 + layer.userData.twinklePhase)+1)/2;
+      layer.material.opacity = layer.userData.baseOpacity * (0.75 + tw*0.25);
+    });
+  }
 
   cameraZ += (cameraTargetZ-cameraZ)*0.045;
   const driftZ = Math.sin(t*0.00022)*0.3;
@@ -855,6 +935,11 @@ function animate(t){
   if(!sliderDragging) zoomSlider.value = zToSlider(cameraTargetZ);
 
   cloudMesh.rotation.y += 0.0006;
+
+  if(earthLoaded && sphereMat.opacity < 1){
+    sphereMat.opacity += (1-sphereMat.opacity)*0.06;
+    cloudMesh.material.opacity += (CLOUD_OPACITY-cloudMesh.material.opacity)*0.06;
+  }
 
   pinGroup.children.forEach(g=>{
     g.userData.halo.lookAt(camera.position);
@@ -1128,6 +1213,11 @@ const letterOverlay = document.getElementById('letter-overlay');
 const letterRouteSub = document.getElementById('letter-route-sub');
 document.getElementById('rp-letter-btn').addEventListener('click', ()=>{
   letterRouteSub.textContent = `Route : ${ZONE_LABEL[currentSelection.origin]} → ${ZONE_LABEL[currentSelection.dest]}`;
+  const dateField = document.getElementById('f-date');
+  if(!dateField.value){
+    const d = new Date();
+    dateField.value = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
   letterOverlay.classList.add('open');
 });
 document.getElementById('letter-close').addEventListener('click', ()=>{
@@ -1169,6 +1259,7 @@ document.getElementById('gen-btn').addEventListener('click', ()=>{
   out.textContent = fullLetter;
   out.classList.add('show');
   document.getElementById('copy-btn').classList.add('show');
+  document.getElementById('download-btn').classList.add('show');
 });
 
 document.getElementById('copy-btn').addEventListener('click', ()=>{
@@ -1179,6 +1270,19 @@ document.getElementById('copy-btn').addEventListener('click', ()=>{
     btn.textContent = 'COPIÉ ✓';
     setTimeout(()=>{btn.textContent = original;}, 1800);
   });
+});
+
+document.getElementById('download-btn').addEventListener('click', ()=>{
+  const text = document.getElementById('letter-output').textContent;
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lettre-de-reclamation.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 });
 
 /* ============================================================
@@ -1197,18 +1301,73 @@ document.querySelectorAll('.reveal').forEach(el=>revealObserver.observe(el));
 /* ============================================================
    3D TILT ON CARDS
 ============================================================ */
-document.querySelectorAll('.tilt-card').forEach(card=>{
-  card.addEventListener('mousemove', e=>{
-    const rect = card.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;  // 0..1
-    const py = (e.clientY - rect.top) / rect.height;
-    const rotateY = (px - 0.5) * 14;
-    const rotateX = (0.5 - py) * 14;
-    card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+if(!REDUCED_MOTION){
+  document.querySelectorAll('.tilt-card').forEach(card=>{
+    card.addEventListener('mousemove', e=>{
+      const rect = card.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;  // 0..1
+      const py = (e.clientY - rect.top) / rect.height;
+      const rotateY = (px - 0.5) * 14;
+      const rotateX = (0.5 - py) * 14;
+      card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    });
+    card.addEventListener('mouseleave', ()=>{
+      card.style.transform = `perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0)`;
+    });
   });
-  card.addEventListener('mouseleave', ()=>{
-    card.style.transform = `perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0)`;
+}
+
+/* ============================================================
+   NAVIGATION MOBILE (tiroir) + SECTION ACTIVE
+============================================================ */
+const navToggle = document.getElementById('nav-toggle');
+const mobileNav = document.getElementById('mobile-nav');
+const navScrim = document.getElementById('nav-scrim');
+function openMobileNav(){ mobileNav.classList.add('open'); navScrim.classList.add('show'); navToggle.setAttribute('aria-expanded','true'); }
+function closeMobileNav(){ mobileNav.classList.remove('open'); navScrim.classList.remove('show'); navToggle.setAttribute('aria-expanded','false'); }
+navToggle.addEventListener('click', ()=>{
+  mobileNav.classList.contains('open') ? closeMobileNav() : openMobileNav();
+});
+navScrim.addEventListener('click', closeMobileNav);
+document.querySelectorAll('#mobile-nav a').forEach(a=> a.addEventListener('click', closeMobileNav));
+
+const navLinks = document.querySelectorAll('[data-nav]');
+const navSections = ['globe-anchor','comment','zones','faq'].map(id=>document.getElementById(id)).filter(Boolean);
+const navObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const id = entry.target.id;
+      navLinks.forEach(a=> a.classList.toggle('active', a.getAttribute('href')===`#${id}`));
+    }
   });
+}, {rootMargin:'-45% 0px -50% 0px'});
+navSections.forEach(sec=> navObserver.observe(sec));
+
+/* ============================================================
+   BOUTON RETOUR EN HAUT
+============================================================ */
+const scrollTopBtn = document.getElementById('scroll-top');
+window.addEventListener('scroll', ()=>{
+  scrollTopBtn.classList.toggle('show', window.scrollY > window.innerHeight*0.6);
+});
+scrollTopBtn.addEventListener('click', ()=>{
+  window.scrollTo({top:0, behavior: REDUCED_MOTION ? 'auto' : 'smooth'});
+});
+
+/* ============================================================
+   RACCOURCIS CLAVIER — Échap ferme les panneaux, +/- zoome
+   le globe quand le curseur le survole
+============================================================ */
+window.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    if(letterOverlay.classList.contains('open')) letterOverlay.classList.remove('open');
+    else if(rightsPanel.classList.contains('open')) closeRightsPanel();
+    else if(mobileNav.classList.contains('open')) closeMobileNav();
+  }
+  if(mouseOverGlobe){
+    if(e.key==='+' || e.key==='=') setZoomZ(cameraTargetZ - 1.2);
+    if(e.key==='-' || e.key==='_') setZoomZ(cameraTargetZ + 1.2);
+  }
 });
 
 </script>
