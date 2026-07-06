@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS des Droits — Achats internationaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b1220;
+    --bg2: #131b2e;
+    --ink: #eef2f8;
+    --muted: #8b96ab;
+    --gold: #e0a94c;
+    --teal: #2dd4bf;
+    --rose: #ef6461;
+    --line: rgba(224,169,76,0.18);
+    --line-soft: rgba(238,242,248,0.08);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background: radial-gradient(ellipse at 50% 20%, var(--bg2), var(--bg) 70%);
+    color: var(--ink); font-family:'Inter', sans-serif; overflow-x:hidden;
+  }
+  ::selection{background:var(--gold); color:var(--bg);}
+  a{color:inherit;}
+
+  /* ---------- top nav ---------- */
+  .topnav{
+    position:fixed; top:0; left:0; right:0; z-index:40;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 40px;
+    background:linear-gradient(180deg, rgba(11,18,32,0.9), transparent);
+    backdrop-filter:blur(4px);
+  }
+  .logo{font-family:'Newsreader', serif; font-style:italic; font-size:19px; display:flex; align-items:center; gap:8px;}
+  .logo .dot{width:7px;height:7px;border-radius:50%;background:var(--teal); box-shadow:0 0 10px var(--teal);}
+  .navlinks{display:flex; gap:28px; font-size:12px; letter-spacing:0.06em; font-family:'JetBrains Mono', monospace; color:var(--muted);}
+  .navlinks a{text-decoration:none; transition:color .2s;}
+  .navlinks a:hover{color:var(--gold);}
+  @media (max-width:720px){ .navlinks{display:none;} .topnav{padding:16px 20px;} }
+
+  /* ---------- hero / globe ---------- */
+  .hero{
+    position:relative; width:100%; height:100vh; min-height:680px;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  #globe-canvas{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab;}
+  #globe-canvas.dragging{cursor:grabbing;}
+
+  .globe-tooltip{
+    position:absolute; z-index:8; pointer-events:none;
+    background:rgba(11,18,32,0.92); border:1px solid var(--line-soft);
+    color:var(--ink); font-family:'JetBrains Mono', monospace; font-size:11px;
+    letter-spacing:0.05em; padding:6px 12px; border-radius:2px;
+    opacity:0; transform:translateY(6px) scale(0.96); transition:opacity .15s ease, transform .15s ease;
+    white-space:nowrap;
+  }
+  .globe-tooltip.show{opacity:1; transform:translateY(0) scale(1);}
+
+  .hero-copy{
+    position:absolute; top:104px; left:50%; transform:translateX(-50%);
+    text-align:center; z-index:5; pointer-events:none; width:min(760px,92vw);
+    padding:30px 30px 24px;
+    background: radial-gradient(ellipse 70% 100% at 50% 40%, rgba(6,9,16,0.7) 0%, rgba(6,9,16,0.38) 55%, rgba(6,9,16,0) 80%);
+  }
+  .hero-eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.25em;
+    color:var(--teal); margin-bottom:14px; text-shadow:0 2px 12px rgba(0,0,0,0.85);
+  }
+  .hero-copy h1{
+    font-family:'Newsreader', serif; font-weight:500; font-size:clamp(24px,4vw,42px);
+    line-height:1.2; color:var(--ink); text-shadow:0 4px 24px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.9);
+  }
+  .hero-copy h1 em{color:var(--gold); font-style:italic;}
+  .hero-copy p{margin-top:12px; color:#c7cede; font-size:13.5px; font-weight:300; text-shadow:0 2px 10px rgba(0,0,0,0.85);}
+
+  .globe-instructions{
+    pointer-events:none; margin-top:20px;
+    display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--muted); letter-spacing:0.04em;
+  }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid var(--line-soft); padding:6px 12px; border-radius:20px;
+    background:rgba(6,9,16,0.75);
+  }
+  .pill .sw{width:8px;height:8px;border-radius:50%;}
+
+  .globe-hint{
+    position:absolute; bottom:28px; left:50%; transform:translateX(-50%); z-index:6;
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--muted); opacity:0.7;
+    display:flex; align-items:center; gap:8px; pointer-events:none;
+  }
+  .globe-hint .spin{display:inline-block; animation:spin 3s linear infinite;}
+  @keyframes spin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+  /* ---------- rights panel ---------- */
+  .rights-panel{
+    position:fixed; top:0; right:0; height:100vh; width:min(420px, 92vw);
+    background:linear-gradient(180deg, rgba(19,27,46,0.98), rgba(11,18,32,0.98));
+    border-left:1px solid var(--line-soft);
+    transform: perspective(1400px) translateX(60px) rotateY(-14deg) scale(0.96);
+    transform-origin: right center;
+    opacity:0; pointer-events:none;
+    transition: transform .6s cubic-bezier(.16,1,.3,1), opacity .5s ease;
+    z-index:50; overflow-y:auto; padding:90px 30px 40px;
+  }
+  .rights-panel.open{transform: perspective(1400px) translateX(0) rotateY(0deg) scale(1); opacity:1; pointer-events:all;}
+  .rp-close{position:absolute; top:24px; right:24px; background:none; border:none; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px; cursor:pointer;}
+  .rp-close:hover{color:var(--gold);}
+  .rp-route{display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:0.04em;}
+  .rp-route b{color:var(--ink); font-weight:600;}
+  .rp-route .arrow{color:var(--gold);}
+  .rp-title{font-family:'Newsreader', serif; font-size:24px; font-weight:500; margin:6px 0 22px; line-height:1.3;}
+  .rp-section{margin-bottom:26px;}
+  .rp-section h4{font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.15em; color:var(--teal); margin-bottom:10px; text-transform:uppercase;}
+  .rp-section p, .rp-section li{font-size:13.5px; line-height:1.65; color:#cbd3e1; font-weight:300;}
+  .rp-section ul{padding-left:18px; margin-top:6px;}
+  .rp-section li{margin-bottom:6px;}
+  .rp-badge{display:inline-block; font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.06em; padding:3px 9px; border-radius:12px; margin-bottom:10px;}
+  .rp-badge.crossborder{background:rgba(224,169,76,0.12); color:var(--gold); border:1px solid rgba(224,169,76,0.3);}
+  .rp-cta{display:block; width:100%; text-align:center; padding:13px; margin-top:6px; background:var(--gold); color:#1a1305; font-weight:600; font-size:13px; border:none; border-radius:2px; cursor:pointer; letter-spacing:0.02em; transition:opacity .2s;}
+  .rp-cta:hover{opacity:0.88;}
+  .rp-reset{display:block; width:100%; text-align:center; padding:10px; margin-top:10px; background:transparent; color:var(--muted); font-size:12px; font-family:'JetBrains Mono', monospace; border:1px solid var(--line-soft); border-radius:2px; cursor:pointer;}
+  .rp-reset:hover{color:var(--ink); border-color:var(--muted);}
+
+  /* ---------- letter overlay ---------- */
+  .letter-overlay{
+    position:fixed; inset:0; z-index:60; background:rgba(6,9,16,0.82); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .35s ease;
+  }
+  .letter-overlay.open{opacity:1; pointer-events:all;}
+  .letter-card{
+    width:min(680px,94vw); max-height:88vh; overflow-y:auto;
+    background:linear-gradient(180deg, rgba(19,27,46,0.98), rgba(11,18,32,0.99));
+    border:1px solid var(--line); padding:34px 38px;
+    transform: perspective(1200px) rotateX(8deg) scale(0.94) translateY(10px);
+    transition: transform .5s cubic-bezier(.16,1,.3,1);
+  }
+  .letter-overlay.open .letter-card{ transform: perspective(1200px) rotateX(0deg) scale(1) translateY(0); }
+  .letter-card h3{font-family:'Newsreader', serif; font-size:22px; font-weight:500; margin-bottom:4px;}
+  .letter-sub{color:var(--muted); font-size:13px; margin-bottom:22px;}
+  .letter-close{float:right; background:none; border:none; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px; cursor:pointer;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+  @media (max-width:600px){.field-row{grid-template-columns:1fr;}}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; color:var(--muted); text-transform:uppercase;}
+  .field input, .field select{background:var(--bg); border:1px solid var(--line-soft); color:var(--ink); padding:10px 12px; font-family:'Inter', sans-serif; font-size:13px; border-radius:2px;}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--teal);}
+  .gen-btn{margin-top:14px; padding:12px 22px; background:var(--teal); color:#062018; border:none; font-weight:600; font-size:13px; cursor:pointer; border-radius:2px;}
+  .gen-btn:hover{opacity:0.88;}
+  .letter-output{margin-top:22px; background:var(--bg); border:1px solid var(--line-soft); padding:18px; font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.75; white-space:pre-wrap; color:#d7deea; display:none;}
+  .letter-output.show{display:block;}
+  .copy-btn{margin-top:12px; padding:9px 18px; background:transparent; color:var(--gold); border:1px solid var(--gold); font-size:11.5px; font-family:'JetBrains Mono', monospace; cursor:pointer; border-radius:2px; display:none;}
+  .copy-btn.show{display:inline-block;}
+
+  /* ---------- sections below the fold ---------- */
+  section{padding:110px 40px; max-width:1160px; margin:0 auto; perspective:1200px; position:relative;}
+  .section-eyebrow{font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.22em; color:var(--teal); margin-bottom:16px;}
+  .section-title{font-family:'Newsreader', serif; font-weight:500; font-size:clamp(24px,3vw,36px); max-width:620px; line-height:1.25; margin-bottom:64px;}
+  .section-title em{color:var(--gold); font-style:italic;}
+  .section-ghost-num{
+    position:absolute; top:20px; right:20px; z-index:-1;
+    font-family:'Newsreader', serif; font-size:clamp(110px,16vw,220px); font-weight:600;
+    color:transparent; -webkit-text-stroke:1px var(--line-soft); line-height:1;
+    user-select:none; pointer-events:none;
+  }
+  .reveal{
+    opacity:0; transform: perspective(1200px) rotateX(-55deg) translateY(50px) translateZ(-60px);
+    transform-origin: bottom center;
+    transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.revealed{opacity:1; transform: perspective(1200px) rotateX(0deg) translateY(0) translateZ(0);}
+  .ticket-row .ticket:nth-child(1){transition-delay:0s;}
+  .ticket-row .ticket:nth-child(2){transition-delay:.14s;}
+  .ticket-row .ticket:nth-child(3){transition-delay:.28s;}
+  .stamp-grid .stamp:nth-child(1){transition-delay:0s;}
+  .stamp-grid .stamp:nth-child(2){transition-delay:.06s;}
+  .stamp-grid .stamp:nth-child(3){transition-delay:.12s;}
+  .stamp-grid .stamp:nth-child(4){transition-delay:.18s;}
+  .stamp-grid .stamp:nth-child(5){transition-delay:.24s;}
+  .stamp-grid .stamp:nth-child(6){transition-delay:.3s;}
+  .stamp-grid .stamp:nth-child(7){transition-delay:.36s;}
+  .stamp-grid .stamp:nth-child(8){transition-delay:.42s;}
+  .stamp-grid .stamp:nth-child(9){transition-delay:.48s;}
+  .stamp-grid .stamp:nth-child(10){transition-delay:.54s;}
+  .case-file .case-item:nth-child(1){transition-delay:0s;}
+  .case-file .case-item:nth-child(2){transition-delay:.1s;}
+  .case-file .case-item:nth-child(3){transition-delay:.2s;}
+  .case-file .case-item:nth-child(4){transition-delay:.3s;}
+  .tilt-card{transition: transform .15s ease-out, box-shadow .15s ease-out; transform-style: preserve-3d; will-change: transform;}
+
+  .eyebrow-row{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .eyebrow-cube{width:12px; height:12px; position:relative; transform-style:preserve-3d; animation: cubeSpin 6s linear infinite; perspective:100px; flex-shrink:0;}
+  .eyebrow-cube span{position:absolute; inset:0; background:linear-gradient(135deg, var(--teal), var(--gold)); opacity:0.85;}
+  .eyebrow-cube span:nth-child(1){transform:translateZ(6px);}
+  .eyebrow-cube span:nth-child(2){transform:rotateY(90deg) translateZ(6px);}
+  .eyebrow-cube span:nth-child(3){transform:rotateY(180deg) translateZ(6px);}
+  .eyebrow-cube span:nth-child(4){transform:rotateY(-90deg) translateZ(6px);}
+  .eyebrow-cube span:nth-child(5){transform:rotateX(90deg) translateZ(6px);}
+  .eyebrow-cube span:nth-child(6){transform:rotateX(-90deg) translateZ(6px);}
+  @keyframes cubeSpin{ from{transform:rotateX(0deg) rotateY(0deg);} to{transform:rotateX(360deg) rotateY(360deg);} }
+
+  .ticket-row{display:flex; gap:0; position:relative; border-top:1px dashed var(--line); padding-top:36px; margin-top:10px;}
+  @media (max-width:800px){.ticket-row{flex-direction:column; gap:36px;}}
+  .ticket{flex:1; position:relative; padding:0 26px 0 0;}
+  .ticket:not(:last-child){border-right:1px dashed var(--line-soft);}
+  @media (max-width:800px){.ticket:not(:last-child){border-right:none;}}
+  .ticket:nth-child(2){transform:translateY(18px);}
+  @media (max-width:800px){.ticket:nth-child(2){transform:none;}}
+  .ticket .dot{position:absolute; top:-42px; left:0; width:9px; height:9px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 4px var(--bg), 0 0 0 5px var(--line);}
+  .ticket .num{font-family:'Newsreader', serif; font-size:46px; font-weight:600; color:transparent; -webkit-text-stroke:1.4px var(--gold); margin-bottom:14px; line-height:1;}
+  .ticket h3{font-family:'Newsreader', serif; font-size:20px; font-weight:500; margin-bottom:10px;}
+  .ticket p{font-size:14px; color:var(--muted); line-height:1.65; font-weight:300; padding-right:10px;}
+
+  .stamp-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:26px 20px; margin-top:10px;}
+  .stamp{position:relative; border:1.5px solid var(--teal); border-radius:6px; padding:18px 16px 16px; font-family:'JetBrains Mono', monospace; background:rgba(45,212,191,0.03);}
+  .stamp::before{content:''; position:absolute; inset:4px; border:1px dashed rgba(45,212,191,0.35); border-radius:3px; pointer-events:none;}
+  .stamp:nth-child(odd){transform:rotate(-1.4deg);}
+  .stamp:nth-child(even){transform:rotate(1.1deg); border-color:var(--gold); background:rgba(224,169,76,0.03);}
+  .stamp:nth-child(even)::before{border-color:rgba(224,169,76,0.35);}
+  .stamp:hover{transform:rotate(0deg) scale(1.03); z-index:2;}
+  .stamp-code{font-size:10px; letter-spacing:0.15em; color:var(--gold); margin-bottom:8px; display:block;}
+  .stamp:nth-child(even) .stamp-code{color:var(--teal);}
+  .stamp b{display:block; color:var(--ink); font-family:'Newsreader', serif; font-size:17px; font-weight:500; margin-bottom:6px;}
+  .stamp span.desc{font-size:11.5px; color:var(--muted); line-height:1.5; display:block;}
+
+  .case-file{display:flex; flex-direction:column; margin-top:10px;}
+  .case-item{display:grid; grid-template-columns:48px 1fr; gap:18px; border-bottom:1px solid var(--line-soft); padding:24px 0;}
+  .case-index{font-family:'Newsreader', serif; font-size:26px; font-weight:600; color:transparent; -webkit-text-stroke:1px var(--line); line-height:1.3;}
+  .case-item details summary{cursor:pointer; font-family:'Newsreader', serif; font-size:17px; font-weight:500; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:16px;}
+  .case-item summary::-webkit-details-marker{display:none;}
+  .case-item summary::after{content:'+'; color:var(--gold); font-size:20px; font-family:'Inter'; flex-shrink:0;}
+  .case-item details[open] summary::after{content:'–';}
+  .case-item p{margin-top:12px; font-size:14px; color:var(--muted); line-height:1.7; font-weight:300; max-width:640px;}
+
+  .disclaimer{position:relative; background:var(--bg2); border:1px solid var(--line-soft); padding:28px 32px; font-size:13px; color:var(--muted); line-height:1.7; font-weight:300; max-width:860px; overflow:hidden;}
+  .disclaimer b{color:var(--ink); font-weight:600;}
+  .disclaimer::before{
+    content:'CONFIDENTIEL'; position:absolute; top:14px; right:-38px;
+    background:transparent; color:var(--rose); border:2px solid var(--rose);
+    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.15em;
+    padding:4px 40px; transform:rotate(28deg); opacity:0.55;
+  }
+  footer{padding:56px 40px; border-top:1px solid var(--line-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="logo"><span class="dot"></span> GPS<em>des</em>Droits</div>
+  <div class="navlinks">
+    <a href="#globe-anchor">LE GLOBE</a>
+    <a href="#comment">COMMENT ÇA MARCHE</a>
+    <a href="#zones">ZONES COUVERTES</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<div class="hero" id="globe-anchor">
+  <canvas id="globe-canvas"></canvas>
+  <div class="globe-tooltip" id="globe-tooltip"></div>
+  <div class="hero-copy">
+    <div class="hero-eyebrow">TES DROITS NE S'ARRÊTENT PAS À LA FRONTIÈRE</div>
+    <h1>Un achat à l'étranger tourne mal ? <em>Sache exactement</em> ce que dit la loi.</h1>
+    <p>Clique ton pays sur le globe, puis celui du vendeur.</p>
+    <div class="globe-instructions">
+      <span class="pill"><span class="sw" style="background:var(--teal)"></span> 1er clic — ton pays</span>
+      <span class="pill"><span class="sw" style="background:var(--gold)"></span> 2e clic — le pays du vendeur</span>
+    </div>
+  </div>
+  <div class="globe-hint"><span class="spin">◐</span> glisse pour tourner le globe</div>
+</div>
+
+<div class="rights-panel" id="rights-panel">
+  <button class="rp-close" id="rp-close">FERMER ✕</button>
+  <div class="rp-route" id="rp-route">TON PAYS <span class="arrow">→</span> VENDEUR</div>
+  <span class="rp-badge" id="rp-badge">TYPE</span>
+  <div class="rp-title" id="rp-title">Tes droits</div>
+  <div class="rp-section"><h4>Ce que dit la loi</h4><ul id="rp-rights"></ul></div>
+  <div class="rp-section"><h4>Vers qui te tourner</h4><p id="rp-contact"></p></div>
+  <button class="rp-cta" id="rp-letter-btn">GÉNÉRER MA LETTRE DE RÉCLAMATION</button>
+  <button class="rp-reset" id="rp-reset">Recommencer</button>
+</div>
+
+<div class="letter-overlay" id="letter-overlay">
+  <div class="letter-card">
+    <button class="letter-close" id="letter-close">FERMER ✕</button>
+    <h3>Ta lettre de réclamation</h3>
+    <div class="letter-sub" id="letter-route-sub">Route : —</div>
+    <div class="field-row">
+      <div class="field"><label>Type de problème</label>
+        <select id="f-problem">
+          <option value="not_received">Colis jamais reçu</option>
+          <option value="defective">Produit défectueux / non conforme</option>
+          <option value="refund_refused">Le vendeur refuse le remboursement</option>
+          <option value="withdrawal">Je veux me rétracter</option>
+        </select>
+      </div>
+      <div class="field"><label>Langue</label>
+        <select id="f-lang"><option value="fr">Français</option><option value="en">English</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Ton nom</label><input type="text" id="f-name" placeholder="Jean Dupont"></div>
+      <div class="field"><label>Nom du vendeur</label><input type="text" id="f-seller" placeholder="Nom de la boutique"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Numéro de commande</label><input type="text" id="f-order" placeholder="#123456"></div>
+      <div class="field"><label>Date de commande</label><input type="text" id="f-date" placeholder="01/06/2026"></div>
+    </div>
+    <div class="field"><label>Produit concerné</label><input type="text" id="f-product" placeholder="Ex : paire d'écouteurs sans fil"></div>
+    <button class="gen-btn" id="gen-btn">GÉNÉRER LA LETTRE</button>
+    <div class="letter-output" id="letter-output"></div>
+    <button class="copy-btn" id="copy-btn">COPIER LE TEXTE</button>
+  </div>
+</div>
+
+<section id="comment">
+  <div class="section-ghost-num">01</div>
+  <div class="eyebrow-row">
+    <div class="eyebrow-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="section-eyebrow" style="margin-bottom:0;">COMMENT ÇA MARCHE</div>
+  </div>
+  <div class="section-title reveal">Trois clics entre <em>toi</em> et une réponse claire, pas une notice de 40 pages.</div>
+  <div class="ticket-row">
+    <div class="ticket tilt-card reveal">
+      <span class="dot"></span>
+      <div class="num">01</div>
+      <h3>Situe l'achat</h3>
+      <p>Clique ton pays sur le globe, puis celui du vendeur. On identifie automatiquement les règles qui s'appliquent aux deux bouts de la transaction.</p>
+    </div>
+    <div class="ticket tilt-card reveal">
+      <span class="dot"></span>
+      <div class="num">02</div>
+      <h3>Comprends tes droits</h3>
+      <p>Un résumé clair — pas de jargon juridique — de ce à quoi tu as droit, et surtout de qui peut réellement t'aider à le faire respecter.</p>
+    </div>
+    <div class="ticket tilt-card reveal">
+      <span class="dot"></span>
+      <div class="num">03</div>
+      <h3>Agis</h3>
+      <p>Génère une lettre de réclamation prête à envoyer, dans la bonne langue, avec les bonnes références légales.</p>
+    </div>
+  </div>
+</section>
+
+<section id="zones">
+  <div class="section-ghost-num">02</div>
+  <div class="eyebrow-row">
+    <div class="eyebrow-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="section-eyebrow" style="margin-bottom:0;">ZONES COUVERTES</div>
+  </div>
+  <div class="section-title reveal">On démarre avec <em>10 grandes zones</em> — le reste du monde arrive ensuite.</div>
+  <div class="stamp-grid">
+    <div class="stamp tilt-card reveal"><span class="stamp-code">EU · SCHENGEN</span><b>Union Européenne</b><span class="desc">Droit de rétractation 14j, garantie légale 2 ans</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">UK · GBR</span><b>Royaume-Uni</b><span class="desc">Consumer Rights Act 2015</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">US · USA</span><b>États-Unis</b><span class="desc">FTC Mail/Internet Order Rule</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">CA · CAN</span><b>Canada</b><span class="desc">Lois provinciales de protection du consommateur</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">AU · AUS</span><b>Australie</b><span class="desc">Australian Consumer Law</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">CN · CHN</span><b>Chine</b><span class="desc">Protections des places de marché (AliExpress, etc.)</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">JP · JPN</span><b>Japon</b><span class="desc">Pas de rétractation légale en ligne (Tokushoho)</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">CH · CHE</span><b>Suisse</b><span class="desc">Hors UE, pas de droit de rétractation général</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">BR · BRA</span><b>Brésil</b><span class="desc">Droit de repentir 7j (art. 49 CDC)</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">?? · ROW</span><b>Reste du monde</b><span class="desc">Recours universel via ta banque</span></div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="section-ghost-num">03</div>
+  <div class="eyebrow-row">
+    <div class="eyebrow-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="section-eyebrow" style="margin-bottom:0;">QUESTIONS FRÉQUENTES</div>
+  </div>
+  <div class="section-title reveal">Ce qu'on ne te dira pas ailleurs</div>
+  <div class="case-file">
+    <div class="case-item reveal">
+      <div class="case-index">01</div>
+      <details><summary>Est-ce que ça remplace un avocat ?</summary>
+      <p>Non. C'est un point de départ pour comprendre tes droits et agir vite, pas un conseil juridique personnalisé. Pour un litige important, un professionnel du droit reste la meilleure option.</p></details>
+    </div>
+    <div class="case-item reveal">
+      <div class="case-index">02</div>
+      <details><summary>Le vendeur est à l'étranger, mes droits s'appliquent vraiment ?</summary>
+      <p>Souvent oui sur le papier — surtout si le vendeur cible activement les consommateurs de ton pays. Mais faire respecter ce droit à distance est plus difficile : priorise aussi la contestation bancaire.</p></details>
+    </div>
+    <div class="case-item reveal">
+      <div class="case-index">03</div>
+      <details><summary>Qu'est-ce qu'une contestation bancaire (chargeback) ?</summary>
+      <p>Une demande à ta banque ou à l'émetteur de ta carte pour annuler un paiement contesté — souvent le recours le plus rapide et universel, quel que soit le pays du vendeur.</p></details>
+    </div>
+    <div class="case-item reveal">
+      <div class="case-index">04</div>
+      <details><summary>Pourquoi seulement 10 zones pour l'instant ?</summary>
+      <p>Parce qu'on préfère être fiable sur peu de zones plutôt qu'approximatif sur beaucoup. Chaque zone ajoutée est vérifiée avant publication.</p></details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="disclaimer reveal">
+    <b>Avertissement.</b> Ce site fournit des informations générales à titre informatif, basées sur des sources publiques (Commission européenne, FTC américaine, réseau ECC, Kokusen japonais, Code des obligations suisse, CDC brésilien). Il ne constitue pas un conseil juridique et ne remplace pas l'avis d'un professionnel du droit. Les règles évoluent — vérifie toujours les informations les plus récentes avant d'agir sur un litige important.
+  </div>
+</section>
+
+<footer>
+  <span><span style="color:var(--gold)">GPS</span> <em style="font-style:italic; font-family:'Newsreader',serif;">des</em> Droits — prototype de démonstration</span>
+  <span>Dossier n° 2026-EU-XB · Informations générales, pas un conseil juridique</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================================================
+   GLOBE 3D INTERACTIF — clique un pays, puis un autre, pour
+   voir tes droits. Texture dessinée en local (fiable partout).
+============================================================ */
+const canvas = document.getElementById('globe-canvas');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+if(THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+function sizeRenderer(){
+  const w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
+  renderer.setSize(w,h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+const CAMERA_REST_Z = 10.4;
+camera.position.set(0, 0.5, 14);
+let cameraZ = 14, cameraTargetZ = CAMERA_REST_Z;
+
+function goToSection(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// starfield
+function makeStars(count, spread, size, color, opacity){
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count*3);
+  for(let i=0;i<count;i++){
+    pos[i*3]=(Math.random()-0.5)*spread;
+    pos[i*3+1]=(Math.random()-0.5)*spread;
+    pos[i*3+2]=(Math.random()-0.5)*spread;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const mat = new THREE.PointsMaterial({color, size, transparent:true, opacity, sizeAttenuation:true});
+  return new THREE.Points(geo, mat);
+}
+const starsFar = makeStars(700, 30, 0.03, 0xe0a94c, 0.4);
+const starsNear = makeStars(500, 22, 0.02, 0xffffff, 0.5);
+scene.add(starsFar); scene.add(starsNear);
+
+let mouseParallaxX = 0, mouseParallaxY = 0;
+window.addEventListener('mousemove', e=>{
+  mouseParallaxX = (e.clientX/window.innerWidth - 0.5);
+  mouseParallaxY = (e.clientY/window.innerHeight - 0.5);
+});
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const keyLight = new THREE.PointLight(0xffffff, 0.75, 40);
+keyLight.position.set(4,5,8);
+scene.add(keyLight);
+const rimLight = new THREE.PointLight(0x2dd4bf, 0.5, 40);
+rimLight.position.set(-6,-2,-4);
+scene.add(rimLight);
+
+const R = 2.2;
+const globeGroup = new THREE.Group();
+scene.add(globeGroup);
+
+// Earth texture drawn locally — zero network dependency, always renders
+function buildEarthTexture(){
+  const cw=1024, ch=512;
+  const c = document.createElement('canvas'); c.width=cw; c.height=ch;
+  const ctx = c.getContext('2d');
+
+  // ocean
+  const grad = ctx.createLinearGradient(0,0,0,ch);
+  grad.addColorStop(0,'#0f4864'); grad.addColorStop(0.5,'#0b3a54'); grad.addColorStop(1,'#082c42');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,cw,ch);
+
+  function ll(lat,lon){return [(lon+180)/360*cw, (90-lat)/180*ch];}
+  function poly(points){
+    ctx.beginPath();
+    points.forEach(([lat,lon],i)=>{
+      const [x,y]=ll(lat,lon);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // landmasses — simplified but real coastline shapes, not blobs
+  ctx.fillStyle = '#4d7a48';
+  poly([[71,-156],[70,-128],[60,-95],[50,-95],[45,-83],[45,-70],[41,-70],[35,-76],[30,-81],[25,-97],[19,-105],[23,-110],[32,-117],[48,-124],[60,-140]]); // North America
+  poly([[83,-30],[70,-22],[60,-45],[70,-55],[80,-45]]); // Greenland
+  poly([[11,-72],[5,-77],[-5,-81],[-18,-70],[-30,-71],[-40,-73],[-54,-68],[-52,-58],[-34,-58],[-23,-43],[-8,-35],[2,-50],[11,-60]]); // South America
+  poly([[37,10],[31,32],[12,43],[0,42],[-15,40],[-26,32],[-34,19],[-33,18],[-20,12],[0,9],[4,-8],[14,-17],[21,-17],[32,-10]]); // Africa
+  poly([[71,25],[65,45],[55,60],[45,45],[41,29],[45,15],[43,5],[51,3],[58,7],[60,5],[66,14]]); // Europe
+  poly([[77,105],[70,140],[60,160],[45,140],[35,130],[23,120],[10,105],[8,98],[20,92],[25,80],[35,60],[45,50],[55,45],[60,60],[70,70]]); // Asia
+  poly([[-11,142],[-18,146],[-25,153],[-33,151],[-38,145],[-35,138],[-32,116],[-20,114],[-14,127]]); // Australia
+
+  // deserts — reuse the site's gold accent, doubles as a nice thematic tie-in
+  ctx.fillStyle = 'rgba(224,169,76,0.55)';
+  poly([[30,0],[28,25],[18,35],[14,25],[16,5],[22,-8],[30,-8]]); // Sahara
+  poly([[30,45],[25,55],[15,50],[18,42]]); // Arabia
+  poly([[45,75],[40,95],[35,90],[38,72]]); // Gobi / Central Asia
+  poly([[-22,125],[-26,138],[-30,132],[-27,122]]); // Australian outback
+
+  // subtle darker green for forested/mountain belts
+  ctx.fillStyle = 'rgba(30,55,30,0.35)';
+  poly([[10,-70],[-5,-72],[-15,-65],[-8,-60],[2,-62]]); // Amazon basin
+  poly([[62,90],[58,110],[52,105],[55,88]]); // Siberian taiga
+
+  // polar ice caps
+  const iceTop = ctx.createLinearGradient(0,0,0,ch*0.09);
+  iceTop.addColorStop(0,'rgba(240,248,255,0.95)'); iceTop.addColorStop(1,'rgba(240,248,255,0)');
+  ctx.fillStyle = iceTop; ctx.fillRect(0,0,cw,ch*0.09);
+  const iceBottom = ctx.createLinearGradient(0,ch*0.91,0,ch);
+  iceBottom.addColorStop(0,'rgba(240,248,255,0)'); iceBottom.addColorStop(1,'rgba(240,248,255,0.95)');
+  ctx.fillStyle = iceBottom; ctx.fillRect(0,ch*0.91,cw,ch*0.09);
+
+  // faint lat/long grid, kept subtle for the GPS feel
+  ctx.strokeStyle='rgba(238,242,248,0.06)'; ctx.lineWidth=1;
+  for(let x=0;x<=cw;x+=cw/12){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,ch);ctx.stroke();}
+  for(let y=0;y<=ch;y+=ch/8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cw,y);ctx.stroke();}
+
+  return new THREE.CanvasTexture(c);
+}
+const sphereGeo = new THREE.SphereGeometry(R, 64, 64);
+const sphereMat = new THREE.MeshPhongMaterial({
+  map: buildEarthTexture(), color:0xffffff,
+  emissive:0x0b1220, emissiveIntensity:0.12, shininess:5, specular:0x1a2a26
+});
+const earthMesh = new THREE.Mesh(sphereGeo, sphereMat);
+globeGroup.add(earthMesh);
+
+function buildCloudTexture(){
+  const cw=1024, ch=512;
+  const c = document.createElement('canvas'); c.width=cw; c.height=ch;
+  const ctx = c.getContext('2d');
+  for(let i=0;i<26;i++){
+    const x=Math.random()*cw, y=Math.random()*ch*0.85+ch*0.05, r=30+Math.random()*70;
+    const g = ctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,'rgba(255,255,255,0.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,r,r*0.5,0,0,Math.PI*2); ctx.fill();
+  }
+  return new THREE.CanvasTexture(c);
+}
+const cloudTex = buildCloudTexture();
+const cloudMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(R*1.012, 48, 48),
+  new THREE.MeshLambertMaterial({map:cloudTex, alphaMap:cloudTex, transparent:true, opacity:0.32, depthWrite:false})
+);
+globeGroup.add(cloudMesh);
+
+const atmoMat = new THREE.ShaderMaterial({
+  uniforms:{ glowColor:{value:new THREE.Color(0x2dd4bf)} },
+  vertexShader:`varying vec3 vNormal; void main(){ vNormal = normalize(normalMatrix*normal); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`varying vec3 vNormal; uniform vec3 glowColor; void main(){ float i = pow(0.62-dot(vNormal,vec3(0.0,0.0,1.0)),3.5); gl_FragColor = vec4(glowColor,1.0)*i; }`,
+  side:THREE.BackSide, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false
+});
+globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.06,64,64), atmoMat));
+
+const wireMat = new THREE.MeshBasicMaterial({color:0x2dd4bf, wireframe:true, transparent:true, opacity:0.05});
+globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.003, 24, 16), wireMat));
+
+// lat/lon -> vec3
+function latLonToVec3(lat, lon, radius){
+  const phi = (90-lat)*(Math.PI/180);
+  const theta = (lon+180)*(Math.PI/180);
+  return new THREE.Vector3(
+    -radius*Math.sin(phi)*Math.cos(theta),
+    radius*Math.cos(phi),
+    radius*Math.sin(phi)*Math.sin(theta)
+  );
+}
+
+const ZONES = [
+  {id:'EU', label:'Union Européenne', lat:50, lon:15},
+  {id:'UK', label:'Royaume-Uni', lat:54, lon:-2},
+  {id:'US', label:'États-Unis', lat:39, lon:-98},
+  {id:'CA', label:'Canada', lat:56, lon:-106},
+  {id:'AU', label:'Australie', lat:-25, lon:133},
+  {id:'CN', label:'Chine', lat:35, lon:105},
+  {id:'JP', label:'Japon', lat:36, lon:138},
+  {id:'CH', label:'Suisse', lat:46.8, lon:8.2},
+  {id:'BR', label:'Brésil', lat:-10, lon:-55},
+  {id:'OTHER', label:'Autre pays', lat:-10, lon:165},
+];
+
+const pinMeshes = {};
+const pinGroup = new THREE.Group();
+globeGroup.add(pinGroup);
+
+ZONES.forEach(zone=>{
+  const pos = latLonToVec3(zone.lat, zone.lon, R*1.01);
+  const g = new THREE.Group();
+  g.position.copy(pos);
+
+  const coreGeo = new THREE.SphereGeometry(0.055, 16, 16);
+  const coreMat = new THREE.MeshBasicMaterial({color:0xeef2f8});
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  core.userData.zoneId = zone.id;
+  g.add(core);
+
+  const haloGeo = new THREE.RingGeometry(0.075, 0.105, 24);
+  const haloMat = new THREE.MeshBasicMaterial({color:0xeef2f8, transparent:true, opacity:0.5, side:THREE.DoubleSide});
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.lookAt(camera.position);
+  g.add(halo);
+
+  const radarGeo = new THREE.RingGeometry(0.06, 0.078, 24);
+  const radarMat = new THREE.MeshBasicMaterial({color:0xeef2f8, transparent:true, opacity:0.6, side:THREE.DoubleSide});
+  const radar = new THREE.Mesh(radarGeo, radarMat);
+  radar.lookAt(camera.position);
+  g.add(radar);
+
+  g.userData.zoneId = zone.id;
+  g.userData.core = core;
+  g.userData.halo = halo;
+  g.userData.radar = radar;
+  g.userData.pulsePhase = Math.random()*Math.PI*2;
+  pinGroup.add(g);
+  pinMeshes[zone.id] = g;
+});
+
+function setPinColor(zoneId, hex){
+  const g = pinMeshes[zoneId];
+  if(!g) return;
+  g.userData.core.material.color.setHex(hex);
+  g.userData.halo.material.color.setHex(hex);
+  g.userData.radar.material.color.setHex(hex);
+}
+function resetPins(){ ZONES.forEach(z=>setPinColor(z.id, 0xeef2f8)); }
+
+let arcLine = null, parcel = null, trailDots = [];
+function clearArc(){
+  if(arcLine){ globeGroup.remove(arcLine); arcLine=null; }
+  if(parcel){ globeGroup.remove(parcel); parcel=null; }
+  trailDots.forEach(d=>globeGroup.remove(d));
+  trailDots = [];
+}
+function drawArc(originId, destId){
+  clearArc();
+  const a = latLonToVec3(ZONES.find(z=>z.id===originId).lat, ZONES.find(z=>z.id===originId).lon, R*1.01);
+  const b = latLonToVec3(ZONES.find(z=>z.id===destId).lat, ZONES.find(z=>z.id===destId).lon, R*1.01);
+  const mid = a.clone().add(b).multiplyScalar(0.5);
+  const dist = a.distanceTo(b);
+  mid.normalize().multiplyScalar(R + 0.6 + dist*0.35);
+  const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+  const points = curve.getPoints(64);
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({color:0xe0a94c, transparent:true, opacity:0.85});
+  arcLine = new THREE.Line(geo, mat);
+  globeGroup.add(arcLine);
+
+  const parcelGeo = new THREE.BoxGeometry(0.09,0.09,0.09);
+  const parcelMat = new THREE.MeshStandardMaterial({color:0x2dd4bf, emissive:0x0d3d36, emissiveIntensity:0.6});
+  parcel = new THREE.Mesh(parcelGeo, parcelMat);
+  parcel.userData.curve = curve;
+  parcel.userData.t = 0;
+  globeGroup.add(parcel);
+
+  const TRAIL_N = 14;
+  for(let i=0;i<TRAIL_N;i++){
+    const dGeo = new THREE.SphereGeometry(0.03*(1-i/TRAIL_N), 6, 6);
+    const dMat = new THREE.MeshBasicMaterial({color:0x2dd4bf, transparent:true, opacity:0.35*(1-i/TRAIL_N)});
+    const dot = new THREE.Mesh(dGeo, dMat);
+    globeGroup.add(dot);
+    trailDots.push(dot);
+  }
+}
+
+// drag rotate + click pins
+let dragging=false, lastX=0, lastY=0, rotY=0, rotX=0, targetRotY=0, targetRotX=0.15;
+let lastInteraction = performance.now();
+canvas.addEventListener('pointerdown', e=>{dragging=true; lastX=e.clientX; lastY=e.clientY; lastInteraction=performance.now(); canvas.classList.add('dragging');});
+window.addEventListener('pointerup', ()=>{dragging=false; canvas.classList.remove('dragging');});
+window.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  targetRotY += (e.clientX-lastX)*0.004;
+  targetRotX = Math.max(-0.6, Math.min(0.6, targetRotX + (e.clientY-lastY)*0.003));
+  lastX=e.clientX; lastY=e.clientY;
+  lastInteraction = performance.now();
+});
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let clickStart={x:0,y:0};
+canvas.addEventListener('pointerdown', e=>{clickStart={x:e.clientX,y:e.clientY};});
+canvas.addEventListener('pointerup', e=>{
+  const moved = Math.hypot(e.clientX-clickStart.x, e.clientY-clickStart.y);
+  if(moved>6) return;
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const coreMeshes = ZONES.map(z=>pinMeshes[z.id].userData.core);
+  const hits = raycaster.intersectObjects(coreMeshes);
+  if(hits.length){
+    onZonePicked(hits[0].object.userData.zoneId);
+    lastInteraction = performance.now();
+  }
+});
+
+const tooltip = document.getElementById('globe-tooltip');
+canvas.addEventListener('pointermove', e=>{
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const coreMeshes = ZONES.map(z=>pinMeshes[z.id].userData.core);
+  const hits = raycaster.intersectObjects(coreMeshes);
+  if(hits.length){
+    const zid = hits[0].object.userData.zoneId;
+    canvas.style.cursor = 'pointer';
+    tooltip.textContent = ZONES.find(z=>z.id===zid).label;
+    tooltip.style.left = (e.clientX - rect.left + 16) + 'px';
+    tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+    tooltip.classList.add('show');
+  } else {
+    tooltip.classList.remove('show');
+    canvas.style.cursor = dragging ? 'grabbing' : 'grab';
+  }
+});
+canvas.addEventListener('pointerleave', ()=>{ tooltip.classList.remove('show'); });
+
+let selection = {origin:null, dest:null};
+function onZonePicked(zoneId){
+  if(!selection.origin){
+    selection.origin = zoneId;
+    setPinColor(zoneId, 0x2dd4bf);
+    cameraTargetZ = 6.6;
+  } else if(!selection.dest && zoneId !== selection.origin){
+    selection.dest = zoneId;
+    setPinColor(zoneId, 0xe0a94c);
+    drawArc(selection.origin, selection.dest);
+    showRightsPanel(selection.origin, selection.dest);
+    cameraTargetZ = 5.8;
+  } else {
+    resetPins(); clearArc();
+    selection = {origin: zoneId, dest:null};
+    setPinColor(zoneId, 0x2dd4bf);
+    closeRightsPanel();
+    cameraTargetZ = 6.6;
+  }
+}
+
+function resetCheckpoint(){
+  resetPins(); clearArc(); selection = {origin:null, dest:null};
+  cameraTargetZ = CAMERA_REST_Z;
+}
+
+function animate(t){
+  const idleFor = performance.now() - lastInteraction;
+  if(!dragging && idleFor > 2200 && !(selection.origin && selection.dest)){
+    targetRotY += 0.0009;
+  }
+  rotY += (targetRotY-rotY)*0.06;
+  rotX += (targetRotX-rotX)*0.06;
+  globeGroup.rotation.y = rotY;
+  globeGroup.rotation.x = rotX;
+
+  starsFar.rotation.y += 0.00006;
+  starsFar.position.x += (mouseParallaxX*0.35 - starsFar.position.x)*0.02;
+  starsFar.position.y += (-mouseParallaxY*0.25 - starsFar.position.y)*0.02;
+  starsNear.position.x += (mouseParallaxX*0.7 - starsNear.position.x)*0.02;
+  starsNear.position.y += (-mouseParallaxY*0.55 - starsNear.position.y)*0.02;
+
+  cameraZ += (cameraTargetZ-cameraZ)*0.045;
+  const driftZ = Math.sin(t*0.00022)*0.3;
+  camera.position.z = cameraZ + driftZ;
+  camera.position.x += (mouseParallaxX*0.5 - camera.position.x)*0.02;
+  camera.lookAt(0,1.9,0);
+
+  cloudMesh.rotation.y += 0.0006;
+
+  pinGroup.children.forEach(g=>{
+    g.userData.halo.lookAt(camera.position);
+    g.userData.radar.lookAt(camera.position);
+    const pulse = (Math.sin(t*0.0018 + g.userData.pulsePhase)+1)/2;
+    const scale = 1 + pulse*1.8;
+    g.userData.radar.scale.set(scale, scale, scale);
+    g.userData.radar.material.opacity = 0.55*(1-pulse);
+  });
+
+  if(parcel && parcel.userData.curve){
+    parcel.userData.t += 0.0035;
+    if(parcel.userData.t > 1) parcel.userData.t = 0;
+    const p = parcel.userData.curve.getPoint(parcel.userData.t);
+    parcel.position.copy(p);
+    parcel.rotation.x += 0.05; parcel.rotation.y += 0.03;
+    trailDots.forEach((dot, i)=>{
+      const tt = parcel.userData.t - (i+1)*0.012;
+      const wrapped = ((tt % 1) + 1) % 1;
+      dot.position.copy(parcel.userData.curve.getPoint(wrapped));
+    });
+  }
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+window.addEventListener('resize', sizeRenderer);
+sizeRenderer();
+setTimeout(()=>{ cameraTargetZ = CAMERA_REST_Z; }, 300);
+requestAnimationFrame(animate);
+
+
+/* ============================================================
+   RULES CONTENT
+============================================================ */
+const ZONE_LABEL = {EU:'Union Européenne', UK:'Royaume-Uni', US:'États-Unis', CA:'Canada', AU:'Australie', CN:'Chine', JP:'Japon', CH:'Suisse', BR:'Brésil', OTHER:'Autre pays'};
+
+const RULES = {
+  EU: {
+    domestic:{
+      title:"Achat au sein de l'UE — tu es protégé par le droit européen",
+      rights:[
+        "Droit de rétractation de 14 jours sans justification pour la plupart des achats en ligne.",
+        "Garantie légale de conformité d'au moins 2 ans sur les biens achetés.",
+        "Le vendeur ne peut pas t'imposer de frais cachés non annoncés avant l'achat."
+      ],
+      contact:"En cas de litige avec un vendeur d'un autre pays de l'UE, le réseau des Centres Européens des Consommateurs (ECC-Net) propose une médiation gratuite. Pour un vendeur de ton propre pays, contacte ton autorité nationale de protection des consommateurs."
+    },
+    crossBorder:{
+      title:"Achat hors UE — tes droits existent, mais sont plus difficiles à faire respecter",
+      rights:[
+        "Si le vendeur cible activement les consommateurs de l'UE (site traduit, livraison locale, paiement en euros), le droit européen s'applique en théorie.",
+        "En pratique, faire respecter ce droit face à un vendeur situé hors UE est souvent long et complexe.",
+        "Les colis de faible valeur peuvent être soumis à des droits de douane et à la TVA à l'importation selon leur montant."
+      ],
+      contact:"Le recours le plus fiable reste la contestation du paiement (chargeback) auprès de ta banque ou de l'émetteur de ta carte. Tu peux aussi signaler le vendeur à ton autorité nationale de consommation (DGCCRF en France)."
+    }
+  },
+  UK: {
+    domestic:{
+      title:"Achat au Royaume-Uni — Consumer Rights Act 2015",
+      rights:[
+        "Les produits doivent être conformes à leur description et de qualité satisfaisante.",
+        "En général, tu disposes de 30 jours pour un remboursement intégral si le produit est défectueux.",
+        "Un délai de rétractation de 14 jours s'applique à la plupart des achats en ligne (Consumer Contracts Regulations)."
+      ],
+      contact:"Contacte d'abord le vendeur, puis Citizens Advice ou Trading Standards si le litige persiste."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers le Royaume-Uni",
+      rights:[
+        "Les protections britanniques s'appliquent surtout aux vendeurs basés ou actifs au Royaume-Uni.",
+        "Face à un vendeur étranger, l'application de ces règles est plus incertaine."
+      ],
+      contact:"Priorise la contestation bancaire auprès de ta banque, et documente soigneusement les échanges avec le vendeur."
+    }
+  },
+  US: {
+    domestic:{
+      title:"Achat aux États-Unis — FTC Mail, Internet, or Telephone Order Rule",
+      rights:[
+        "Le vendeur doit expédier dans le délai annoncé, ou sous 30 jours si aucun délai n'est précisé.",
+        "En cas de retard, il doit te prévenir et t'offrir le choix entre attendre ou annuler pour un remboursement intégral.",
+        "Si tu as payé par carte, le Fair Credit Billing Act te permet de contester une facturation dans les 60 jours suivant le relevé."
+      ],
+      contact:"Signale les manquements à la Federal Trade Commission via ReportFraud.ftc.gov, ou contacte directement ton émetteur de carte pour une contestation."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers les États-Unis",
+      rights:[
+        "La règle FTC s'applique en théorie à tout vendeur qui cible des acheteurs américains, peu importe où il est basé.",
+        "Son application contre un vendeur situé à l'étranger reste toutefois limitée en pratique."
+      ],
+      contact:"La contestation bancaire (chargeback) via ta carte reste le recours le plus rapide et le plus fiable dans ce cas."
+    }
+  },
+  CA: {
+    domestic:{
+      title:"Achat au Canada — protection principalement provinciale",
+      rights:[
+        "La protection du consommateur relève surtout des provinces (ex. Loi sur la protection du consommateur au Québec).",
+        "En général, tu as droit à un remboursement si le produit ne correspond pas à sa description."
+      ],
+      contact:"Vérifie les règles spécifiques de ta province auprès de l'Office de la protection du consommateur (Québec) ou de l'équivalent provincial."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers le Canada",
+      rights:[
+        "Les protections provinciales s'appliquent difficilement à un vendeur situé hors du Canada."
+      ],
+      contact:"La contestation bancaire reste le recours le plus accessible pour un litige avec un vendeur étranger."
+    }
+  },
+  AU: {
+    domestic:{
+      title:"Achat en Australie — Australian Consumer Law",
+      rights:[
+        "Les produits doivent être de qualité acceptable et conformes à leur description.",
+        "Tu as droit à une réparation, un remplacement ou un remboursement en cas de non-conformité."
+      ],
+      contact:"Contacte l'ACCC (Australian Competition and Consumer Commission) ou l'organisme de protection des consommateurs de ton État."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers l'Australie",
+      rights:[
+        "L'Australian Consumer Law peut s'appliquer si le vendeur cible activement le marché australien, mais son application reste limitée face à un vendeur étranger."
+      ],
+      contact:"Privilégie la contestation bancaire, et signale le vendeur à l'ACCC si nécessaire."
+    }
+  },
+  CN: {
+    domestic:{
+      title:"Achat sur une place de marché chinoise (AliExpress, etc.)",
+      rights:[
+        "Les grandes places de marché (AliExpress, Alibaba) proposent leurs propres programmes de protection acheteur, souvent plus rapides à activer que le droit local.",
+        "Vérifie systématiquement les conditions de garantie de la plateforme avant d'acheter."
+      ],
+      contact:"Utilise d'abord le programme de protection acheteur de la plateforme, puis la contestation bancaire si besoin."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers un acheteur en Chine",
+      rights:[
+        "Les recours pour un acheteur situé en Chine face à un vendeur étranger sont peu documentés et varient fortement."
+      ],
+      contact:"Privilégie les protections de la plateforme d'achat utilisée, et contacte ta banque pour toute contestation de paiement."
+    }
+  },
+  JP: {
+    domestic:{
+      title:"Achat au Japon — Loi sur les transactions commerciales spécifiques (Tokushoho)",
+      rights:[
+        "Contrairement à la vente par démarchage, l'achat en ligne (vente à distance) n'ouvre pas de droit légal de rétractation au Japon.",
+        "Le vendeur doit afficher clairement sa politique de retour sur l'écran de confirmation finale de la commande ; à défaut de mention claire, un retour reste possible sous 8 jours.",
+        "Si l'écran de confirmation finale est trompeur (quantité, prix ou modalités mal indiqués), la commande peut être annulée."
+      ],
+      contact:"Vérifie d'abord la politique de retour affichée par le vendeur. En cas de litige, le Centre National des Affaires de Consommation (Kokusen) et les centres de consommation locaux (ligne d'assistance 188) peuvent t'orienter."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers le Japon",
+      rights:[
+        "Les protections japonaises visent avant tout les vendeurs établis au Japon ; leur application face à un vendeur étranger est limitée.",
+        "Aucune rétractation légale n'existe de toute façon pour la vente à distance, qu'elle soit domestique ou internationale."
+      ],
+      contact:"Privilégie la contestation bancaire (chargeback) auprès de ta banque ou de l'émetteur de ta carte, recours le plus efficace face à un vendeur situé hors du Japon."
+    }
+  },
+  CH: {
+    domestic:{
+      title:"Achat en Suisse — pas de droit de rétractation général en ligne",
+      rights:[
+        "Contrairement à l'UE et au Royaume-Uni, le droit suisse ne prévoit pas de délai de rétractation général pour les achats à distance (en ligne, par téléphone).",
+        "Une exception étroite existe pour le démarchage à domicile portant sur plus de 100 CHF.",
+        "Une garantie légale de 2 ans contre les défauts s'applique en principe (Code des obligations), mais les vendeurs la réduisent souvent à 1 an dans leurs conditions générales — vérifie toujours les CGV avant d'acheter."
+      ],
+      contact:"Vérifie en priorité la politique de retour volontaire du vendeur (beaucoup l'offrent sans y être obligés). En cas de litige, la Fondation pour la protection des consommateurs (SKS) ou un ombudsman de branche peuvent t'aider."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers la Suisse",
+      rights:[
+        "La Suisse n'étant pas membre de l'UE, les règles européennes de rétractation ne s'appliquent pas automatiquement, même face à un vendeur européen.",
+        "Sans droit de rétractation légal de toute façon, ta marge de manœuvre dépend presque entièrement de la politique commerciale du vendeur."
+      ],
+      contact:"La contestation bancaire (chargeback) reste le recours le plus universel, quel que soit le pays du vendeur."
+    }
+  },
+  BR: {
+    domestic:{
+      title:"Achat au Brésil — Code de défense du consommateur (CDC), art. 49",
+      rights:[
+        "Droit de repentir (direito de arrependimento) de 7 jours à compter de la réception du produit pour tout achat hors établissement commercial, y compris en ligne — sans justification ni frais.",
+        "Garantie légale de 90 jours pour signaler un défaut sur un produit ou service durable (30 jours pour les biens non durables).",
+        "En cas d'exercice du droit de repentir, le vendeur doit rembourser intégralement et sans délai les sommes versées."
+      ],
+      contact:"Contacte d'abord le vendeur, puis un Procon (organisme public de défense du consommateur) de ton État, ou dépose une plainte sur la plateforme consumidor.gov.br."
+    },
+    crossBorder:{
+      title:"Achat depuis l'étranger vers un acheteur au Brésil",
+      rights:[
+        "Le CDC peut s'appliquer si le vendeur cible activement les consommateurs brésiliens (site en portugais, prix en reais, livraison locale), mais le faire respecter face à un vendeur situé à l'étranger reste complexe.",
+        "Des droits de douane et taxes d'importation peuvent s'appliquer aux colis internationaux selon leur valeur."
+      ],
+      contact:"Privilégie la contestation bancaire auprès de ta banque ou de l'émetteur de ta carte, et signale le vendeur à un Procon si besoin."
+    }
+  },
+  OTHER: {
+    domestic:{
+      title:"Recours universel",
+      rights:[
+        "Documente tout : confirmation de commande, échanges avec le vendeur, preuves de paiement, suivi de livraison.",
+        "Vérifie si la plateforme d'achat (et pas seulement le vendeur) propose sa propre garantie acheteur — c'est souvent le recours le plus rapide."
+      ],
+      contact:"Contacte ta banque ou l'émetteur de ta carte pour une contestation de paiement (chargeback), et ton autorité nationale de protection des consommateurs si elle existe."
+    },
+    crossBorder:{
+      title:"Recours universel — achat international",
+      rights:[
+        "Sans cadre légal spécifique identifié pour cette combinaison de pays, le recours le plus fiable reste la contestation bancaire.",
+        "Les réseaux de cartes (Visa, Mastercard) appliquent des règles de contestation valables dans la plupart des pays, indépendamment du droit local du vendeur."
+      ],
+      contact:"Contacte ta banque en priorité. Documente soigneusement l'achat et les échanges avec le vendeur."
+    }
+  }
+};
+
+function getRule(originId, destId){
+  const zone = RULES[originId] || RULES.OTHER;
+  const isDomestic = originId === destId; // same zone selected twice isn't possible, but kept for safety
+  const key = (originId === destId) ? 'domestic' : (destId === originId ? 'domestic' : 'crossBorder');
+  return zone[key];
+}
+
+/* ============================================================
+   RIGHTS PANEL
+============================================================ */
+const rightsPanel = document.getElementById('rights-panel');
+const rpRoute = document.getElementById('rp-route');
+const rpBadge = document.getElementById('rp-badge');
+const rpTitle = document.getElementById('rp-title');
+const rpRights = document.getElementById('rp-rights');
+const rpContact = document.getElementById('rp-contact');
+
+let currentSelection = {origin:null, dest:null, isDomestic:false};
+
+function showRightsPanel(originId, destId){
+  const isDomestic = false; // origin and dest are always different zones by construction
+  const rule = getRule(originId, destId);
+  currentSelection = {origin:originId, dest:destId};
+
+  rpRoute.innerHTML = `<b>${ZONE_LABEL[originId]}</b> <span class="arrow">→</span> ${ZONE_LABEL[destId]}`;
+  rpBadge.textContent = 'ACHAT INTERNATIONAL';
+  rpBadge.className = 'rp-badge crossborder';
+  rpTitle.textContent = rule.title;
+  rpRights.innerHTML = rule.rights.map(r=>`<li>${r}</li>`).join('');
+  rpContact.textContent = rule.contact;
+
+  rightsPanel.classList.add('open');
+}
+function closeRightsPanel(){
+  rightsPanel.classList.remove('open');
+}
+document.getElementById('rp-close').addEventListener('click', closeRightsPanel);
+document.getElementById('rp-reset').addEventListener('click', ()=>{
+  closeRightsPanel();
+  resetCheckpoint();
+});
+
+/* ============================================================
+   LETTER GENERATOR
+============================================================ */
+const letterOverlay = document.getElementById('letter-overlay');
+const letterRouteSub = document.getElementById('letter-route-sub');
+document.getElementById('rp-letter-btn').addEventListener('click', ()=>{
+  letterRouteSub.textContent = `Route : ${ZONE_LABEL[currentSelection.origin]} → ${ZONE_LABEL[currentSelection.dest]}`;
+  letterOverlay.classList.add('open');
+});
+document.getElementById('letter-close').addEventListener('click', ()=>{
+  letterOverlay.classList.remove('open');
+});
+letterOverlay.addEventListener('click', e=>{ if(e.target===letterOverlay) letterOverlay.classList.remove('open'); });
+
+const PROBLEM_TEXT_FR = {
+  not_received: (o)=>`Je vous contacte au sujet de ma commande n°${o.order || '[numéro de commande]'} passée le ${o.date || '[date]'}, concernant l'article suivant : ${o.product || '[produit]'}.\n\nÀ ce jour, je n'ai reçu aucune livraison, alors que le délai annoncé lors de l'achat est largement dépassé.\n\nJe vous demande de bien vouloir :\n- me confirmer le statut d'expédition de ma commande,\n- ou, à défaut, procéder à un remboursement intégral dans les meilleurs délais.\n\nSans réponse satisfaisante sous 15 jours, je me réserve le droit de contester ce paiement auprès de mon émetteur de carte bancaire.`,
+  defective: (o)=>`Je vous contacte au sujet de ma commande n°${o.order || '[numéro de commande]'} passée le ${o.date || '[date]'}, concernant l'article suivant : ${o.product || '[produit]'}.\n\nCet article ne correspond pas à la description fournie / présente un défaut de fabrication [préciser le problème].\n\nConformément à la garantie légale de conformité, je vous demande de procéder, à mon choix :\n- au remplacement de l'article,\n- ou à son remboursement intégral, frais de retour inclus.\n\nJe reste à votre disposition pour vous transmettre des photos ou vidéos du défaut constaté.`,
+  refund_refused: (o)=>`Je vous contacte suite à votre refus de rembourser ma commande n°${o.order || '[numéro de commande]'} passée le ${o.date || '[date]'}, concernant l'article suivant : ${o.product || '[produit]'}.\n\nCe refus n'est pas conforme à mes droits de consommateur applicables à cet achat.\n\nJe vous demande de reconsidérer votre décision et de procéder au remboursement intégral sous 15 jours.\n\nÀ défaut de réponse satisfaisante, je transmettrai ce dossier à mon émetteur de carte bancaire ainsi qu'à l'autorité de protection des consommateurs compétente.`,
+  withdrawal: (o)=>`Je vous informe de ma décision d'exercer mon droit de rétractation concernant ma commande n°${o.order || '[numéro de commande]'} passée le ${o.date || '[date]'}, portant sur l'article suivant : ${o.product || '[produit]'}.\n\nConformément à la réglementation applicable, je vous demande de bien vouloir me confirmer la procédure de retour ainsi que le remboursement intégral du montant payé, hors frais de retour le cas échéant.`
+};
+const PROBLEM_TEXT_EN = {
+  not_received: (o)=>`I am writing regarding my order #${o.order || '[order number]'} placed on ${o.date || '[date]'}, for the following item: ${o.product || '[product]'}.\n\nAs of today, I have not received any delivery, and the estimated delivery time stated at purchase has clearly passed.\n\nI would like you to:\n- confirm the shipping status of my order,\n- or, failing that, issue a full refund as soon as possible.\n\nWithout a satisfactory response within 15 days, I reserve the right to dispute this charge with my card issuer.`,
+  defective: (o)=>`I am writing regarding my order #${o.order || '[order number]'} placed on ${o.date || '[date]'}, for the following item: ${o.product || '[product]'}.\n\nThis item does not match its description / has a manufacturing defect [specify the issue].\n\nI am requesting, at my choice:\n- a replacement of the item,\n- or a full refund, including return shipping costs.\n\nI am happy to provide photos or video of the defect.`,
+  refund_refused: (o)=>`I am writing following your refusal to refund my order #${o.order || '[order number]'} placed on ${o.date || '[date]'}, for the following item: ${o.product || '[product]'}.\n\nThis refusal does not appear consistent with my consumer rights applicable to this purchase.\n\nI ask you to reconsider and issue a full refund within 15 days.\n\nWithout a satisfactory response, I will escalate this matter to my card issuer and the relevant consumer protection authority.`,
+  withdrawal: (o)=>`I am writing to exercise my right of withdrawal regarding order #${o.order || '[order number]'} placed on ${o.date || '[date]'}, for the following item: ${o.product || '[product]'}.\n\nIn accordance with applicable regulations, please confirm the return procedure and the full refund of the amount paid, excluding return shipping costs where applicable.`
+};
+
+document.getElementById('gen-btn').addEventListener('click', ()=>{
+  const problem = document.getElementById('f-problem').value;
+  const lang = document.getElementById('f-lang').value;
+  const name = document.getElementById('f-name').value || (lang==='fr' ? '[Ton nom]' : '[Your name]');
+  const seller = document.getElementById('f-seller').value || (lang==='fr' ? '[Nom du vendeur]' : '[Seller name]');
+  const order = document.getElementById('f-order').value;
+  const date = document.getElementById('f-date').value;
+  const product = document.getElementById('f-product').value;
+
+  const body = (lang==='fr' ? PROBLEM_TEXT_FR : PROBLEM_TEXT_EN)[problem]({order, date, product});
+  const greeting = lang==='fr' ? `Madame, Monsieur,\n\n` : `Dear Sir or Madam,\n\n`;
+  const closing = lang==='fr'
+    ? `\n\nDans l'attente de votre réponse, je vous prie d'agréer, Madame, Monsieur, mes salutations distinguées.\n\n${name}`
+    : `\n\nI look forward to your response.\n\nKind regards,\n${name}`;
+  const subjectLine = lang==='fr' ? `Objet : Réclamation — Commande auprès de ${seller}\n\n` : `Subject: Complaint — Order with ${seller}\n\n`;
+
+  const fullLetter = subjectLine + greeting + body + closing;
+  const out = document.getElementById('letter-output');
+  out.textContent = fullLetter;
+  out.classList.add('show');
+  document.getElementById('copy-btn').classList.add('show');
+});
+
+document.getElementById('copy-btn').addEventListener('click', ()=>{
+  const text = document.getElementById('letter-output').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    const original = btn.textContent;
+    btn.textContent = 'COPIÉ ✓';
+    setTimeout(()=>{btn.textContent = original;}, 1800);
+  });
+});
+
+/* ============================================================
+   SCROLL REVEAL
+============================================================ */
+const revealObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('revealed');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, {threshold:0.15, rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>revealObserver.observe(el));
+
+/* ============================================================
+   3D TILT ON CARDS
+============================================================ */
+document.querySelectorAll('.tilt-card').forEach(card=>{
+  card.addEventListener('mousemove', e=>{
+    const rect = card.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;  // 0..1
+    const py = (e.clientY - rect.top) / rect.height;
+    const rotateY = (px - 0.5) * 14;
+    const rotateX = (0.5 - py) * 14;
+    card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+  });
+  card.addEventListener('mouseleave', ()=>{
+    card.style.transform = `perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0)`;
+  });
+});
+
+</script>
+</body>
+</html>
