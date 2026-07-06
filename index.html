@@ -415,7 +415,8 @@
 <script>
 /* ============================================================
    GLOBE 3D INTERACTIF — clique un pays, puis un autre, pour
-   voir tes droits. Texture dessinée en local (fiable partout).
+   voir tes droits. Textures Terre photoréalistes (NASA Blue
+   Marble, via le pack d'exemples three.js sur CDN).
 ============================================================ */
 const canvas = document.getElementById('globe-canvas');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
@@ -460,11 +461,11 @@ window.addEventListener('mousemove', e=>{
   mouseParallaxY = (e.clientY/window.innerHeight - 0.5);
 });
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-const keyLight = new THREE.PointLight(0xffffff, 0.75, 40);
+scene.add(new THREE.AmbientLight(0xffffff, 0.38));
+const keyLight = new THREE.PointLight(0xfff4e0, 1.05, 40);
 keyLight.position.set(4,5,8);
 scene.add(keyLight);
-const rimLight = new THREE.PointLight(0x2dd4bf, 0.5, 40);
+const rimLight = new THREE.PointLight(0x2dd4bf, 0.55, 40);
 rimLight.position.set(-6,-2,-4);
 scene.add(rimLight);
 
@@ -472,89 +473,41 @@ const R = 2.2;
 const globeGroup = new THREE.Group();
 scene.add(globeGroup);
 
-// Earth texture drawn locally — zero network dependency, always renders
-function buildEarthTexture(){
-  const cw=1024, ch=512;
-  const c = document.createElement('canvas'); c.width=cw; c.height=ch;
-  const ctx = c.getContext('2d');
-
-  // ocean
-  const grad = ctx.createLinearGradient(0,0,0,ch);
-  grad.addColorStop(0,'#0f4864'); grad.addColorStop(0.5,'#0b3a54'); grad.addColorStop(1,'#082c42');
-  ctx.fillStyle = grad; ctx.fillRect(0,0,cw,ch);
-
-  function ll(lat,lon){return [(lon+180)/360*cw, (90-lat)/180*ch];}
-  function poly(points){
-    ctx.beginPath();
-    points.forEach(([lat,lon],i)=>{
-      const [x,y]=ll(lat,lon);
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // landmasses — simplified but real coastline shapes, not blobs
-  ctx.fillStyle = '#4d7a48';
-  poly([[71,-156],[70,-128],[60,-95],[50,-95],[45,-83],[45,-70],[41,-70],[35,-76],[30,-81],[25,-97],[19,-105],[23,-110],[32,-117],[48,-124],[60,-140]]); // North America
-  poly([[83,-30],[70,-22],[60,-45],[70,-55],[80,-45]]); // Greenland
-  poly([[11,-72],[5,-77],[-5,-81],[-18,-70],[-30,-71],[-40,-73],[-54,-68],[-52,-58],[-34,-58],[-23,-43],[-8,-35],[2,-50],[11,-60]]); // South America
-  poly([[37,10],[31,32],[12,43],[0,42],[-15,40],[-26,32],[-34,19],[-33,18],[-20,12],[0,9],[4,-8],[14,-17],[21,-17],[32,-10]]); // Africa
-  poly([[71,25],[65,45],[55,60],[45,45],[41,29],[45,15],[43,5],[51,3],[58,7],[60,5],[66,14]]); // Europe
-  poly([[77,105],[70,140],[60,160],[45,140],[35,130],[23,120],[10,105],[8,98],[20,92],[25,80],[35,60],[45,50],[55,45],[60,60],[70,70]]); // Asia
-  poly([[-11,142],[-18,146],[-25,153],[-33,151],[-38,145],[-35,138],[-32,116],[-20,114],[-14,127]]); // Australia
-
-  // deserts — reuse the site's gold accent, doubles as a nice thematic tie-in
-  ctx.fillStyle = 'rgba(224,169,76,0.55)';
-  poly([[30,0],[28,25],[18,35],[14,25],[16,5],[22,-8],[30,-8]]); // Sahara
-  poly([[30,45],[25,55],[15,50],[18,42]]); // Arabia
-  poly([[45,75],[40,95],[35,90],[38,72]]); // Gobi / Central Asia
-  poly([[-22,125],[-26,138],[-30,132],[-27,122]]); // Australian outback
-
-  // subtle darker green for forested/mountain belts
-  ctx.fillStyle = 'rgba(30,55,30,0.35)';
-  poly([[10,-70],[-5,-72],[-15,-65],[-8,-60],[2,-62]]); // Amazon basin
-  poly([[62,90],[58,110],[52,105],[55,88]]); // Siberian taiga
-
-  // polar ice caps
-  const iceTop = ctx.createLinearGradient(0,0,0,ch*0.09);
-  iceTop.addColorStop(0,'rgba(240,248,255,0.95)'); iceTop.addColorStop(1,'rgba(240,248,255,0)');
-  ctx.fillStyle = iceTop; ctx.fillRect(0,0,cw,ch*0.09);
-  const iceBottom = ctx.createLinearGradient(0,ch*0.91,0,ch);
-  iceBottom.addColorStop(0,'rgba(240,248,255,0)'); iceBottom.addColorStop(1,'rgba(240,248,255,0.95)');
-  ctx.fillStyle = iceBottom; ctx.fillRect(0,ch*0.91,cw,ch*0.09);
-
-  // faint lat/long grid, kept subtle for the GPS feel
-  ctx.strokeStyle='rgba(238,242,248,0.06)'; ctx.lineWidth=1;
-  for(let x=0;x<=cw;x+=cw/12){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,ch);ctx.stroke();}
-  for(let y=0;y<=ch;y+=ch/8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cw,y);ctx.stroke();}
-
-  return new THREE.CanvasTexture(c);
+// Textures Terre réelles (NASA Blue Marble), chargées depuis le pack
+// d'exemples officiel de three.js, épinglé à la version r128 utilisée
+// ici — stable et pérenne (ne changera pas sous nos pieds).
+const texLoader = new THREE.TextureLoader();
+const TEX_BASE = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/';
+function loadTex(name, srgb){
+  const t = texLoader.load(TEX_BASE + name);
+  if(srgb && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = 4;
+  return t;
 }
-const sphereGeo = new THREE.SphereGeometry(R, 64, 64);
+const earthDayTex = loadTex('earth_atmos_2048.jpg', true);
+const earthNormalTex = loadTex('earth_normal_2048.jpg', false);
+const earthSpecularTex = loadTex('earth_specular_2048.jpg', false);
+const earthLightsTex = loadTex('earth_lights_2048.png', true);
+const cloudTex = loadTex('earth_clouds_1024.png', false);
+
+const sphereGeo = new THREE.SphereGeometry(R, 96, 96);
 const sphereMat = new THREE.MeshPhongMaterial({
-  map: buildEarthTexture(), color:0xffffff,
-  emissive:0x0b1220, emissiveIntensity:0.12, shininess:5, specular:0x1a2a26
+  map: earthDayTex,
+  normalMap: earthNormalTex,
+  normalScale: new THREE.Vector2(0.75, 0.75),
+  specularMap: earthSpecularTex,
+  specular: new THREE.Color(0x2a4a52),
+  shininess: 14,
+  emissiveMap: earthLightsTex,
+  emissive: new THREE.Color(0xffddaa),
+  emissiveIntensity: 0.28
 });
 const earthMesh = new THREE.Mesh(sphereGeo, sphereMat);
 globeGroup.add(earthMesh);
 
-function buildCloudTexture(){
-  const cw=1024, ch=512;
-  const c = document.createElement('canvas'); c.width=cw; c.height=ch;
-  const ctx = c.getContext('2d');
-  for(let i=0;i<26;i++){
-    const x=Math.random()*cw, y=Math.random()*ch*0.85+ch*0.05, r=30+Math.random()*70;
-    const g = ctx.createRadialGradient(x,y,0,x,y,r);
-    g.addColorStop(0,'rgba(255,255,255,0.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,r,r*0.5,0,0,Math.PI*2); ctx.fill();
-  }
-  return new THREE.CanvasTexture(c);
-}
-const cloudTex = buildCloudTexture();
 const cloudMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(R*1.012, 48, 48),
-  new THREE.MeshLambertMaterial({map:cloudTex, alphaMap:cloudTex, transparent:true, opacity:0.32, depthWrite:false})
+  new THREE.SphereGeometry(R*1.012, 64, 64),
+  new THREE.MeshLambertMaterial({map:cloudTex, alphaMap:cloudTex, transparent:true, opacity:0.4, depthWrite:false})
 );
 globeGroup.add(cloudMesh);
 
@@ -566,8 +519,9 @@ const atmoMat = new THREE.ShaderMaterial({
 });
 globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.06,64,64), atmoMat));
 
-const wireMat = new THREE.MeshBasicMaterial({color:0x2dd4bf, wireframe:true, transparent:true, opacity:0.05});
+const wireMat = new THREE.MeshBasicMaterial({color:0x2dd4bf, wireframe:true, transparent:true, opacity:0.07});
 globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.003, 24, 16), wireMat));
+globeGroup.rotation.z = -23.4 * Math.PI/180; // inclinaison axiale réaliste de la Terre
 
 // lat/lon -> vec3
 function latLonToVec3(lat, lon, radius){
