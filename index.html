@@ -175,7 +175,12 @@
   .rp-route{display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:0.04em;}
   .rp-route b{color:var(--ink); font-weight:600;}
   .rp-route .arrow{color:var(--gold);}
-  .rp-title{font-family:'Newsreader', serif; font-size:24px; font-weight:500; margin:6px 0 22px; line-height:1.3;}
+  .rp-title{font-family:'Newsreader', serif; font-size:24px; font-weight:500; margin:6px 0 18px; line-height:1.3;}
+  .rp-tldr{
+    background:rgba(45,212,191,0.08); border:1px solid rgba(45,212,191,0.28); border-radius:4px;
+    padding:14px 16px; margin-bottom:26px; font-size:13.5px; line-height:1.6; color:var(--ink); font-weight:300;
+  }
+  .rp-tldr b{color:var(--teal); font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.12em; display:block; margin-bottom:6px;}
   .rp-section{margin-bottom:26px;}
   .rp-section h4{font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.15em; color:var(--teal); margin-bottom:10px; text-transform:uppercase;}
   .rp-section p, .rp-section li{font-size:13.5px; line-height:1.65; color:#cbd3e1; font-weight:300;}
@@ -380,6 +385,7 @@
   <div class="rp-route" id="rp-route">TON PAYS <span class="arrow">→</span> VENDEUR</div>
   <span class="rp-badge" id="rp-badge">TYPE</span>
   <div class="rp-title" id="rp-title">Tes droits</div>
+  <div class="rp-tldr"><b>EN BREF</b><span id="rp-tldr-text"></span></div>
   <div class="rp-section"><h4>Ce que dit la loi</h4><ul id="rp-rights"></ul></div>
   <div class="rp-section"><h4>Vers qui te tourner</h4><p id="rp-contact"></p></div>
   <button class="rp-cta" id="rp-letter-btn">GÉNÉRER MA LETTRE DE RÉCLAMATION</button>
@@ -459,16 +465,16 @@
   </div>
   <div class="section-title reveal">On démarre avec <em>10 grandes zones</em> — le reste du monde arrive ensuite.</div>
   <div class="stamp-grid">
-    <div class="stamp tilt-card reveal"><span class="stamp-code">EU · SCHENGEN</span><b>Union Européenne</b><span class="desc">Droit de rétractation 14j, garantie légale 2 ans</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">UK · GBR</span><b>Royaume-Uni</b><span class="desc">Consumer Rights Act 2015</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">US · USA</span><b>États-Unis</b><span class="desc">FTC Mail/Internet Order Rule</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">CA · CAN</span><b>Canada</b><span class="desc">Lois provinciales de protection du consommateur</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">AU · AUS</span><b>Australie</b><span class="desc">Australian Consumer Law</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">CN · CHN</span><b>Chine</b><span class="desc">Protections des places de marché (AliExpress, etc.)</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">JP · JPN</span><b>Japon</b><span class="desc">Pas de rétractation légale en ligne (Tokushoho)</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">CH · CHE</span><b>Suisse</b><span class="desc">Hors UE, pas de droit de rétractation général</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">BR · BRA</span><b>Brésil</b><span class="desc">Droit de repentir 7j (art. 49 CDC)</span></div>
-    <div class="stamp tilt-card reveal"><span class="stamp-code">?? · ROW</span><b>Reste du monde</b><span class="desc">Recours universel via ta banque</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">EU · SCHENGEN</span><b>Union Européenne</b><span class="desc">14 jours pour changer d'avis, 2 ans de garantie</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">UK · GBR</span><b>Royaume-Uni</b><span class="desc">30 jours pour te faire rembourser un produit défectueux</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">US · USA</span><b>États-Unis</b><span class="desc">Le vendeur doit livrer à temps ou te rembourser</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">CA · CAN</span><b>Canada</b><span class="desc">Ça dépend de la province, mais un remboursement est possible</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">AU · AUS</span><b>Australie</b><span class="desc">Réparation, échange ou remboursement si le produit est mauvais</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">CN · CHN</span><b>Chine</b><span class="desc">Utilise d'abord la protection acheteur d'AliExpress ou Alibaba</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">JP · JPN</span><b>Japon</b><span class="desc">Pas de retour automatique en ligne, vérifie la politique du vendeur</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">CH · CHE</span><b>Suisse</b><span class="desc">Pas de délai de réflexion automatique en ligne</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">BR · BRA</span><b>Brésil</b><span class="desc">7 jours pour changer d'avis après réception</span></div>
+    <div class="stamp tilt-card reveal"><span class="stamp-code">?? · ROW</span><b>Reste du monde</b><span class="desc">Ta banque peut annuler le paiement en cas de problème</span></div>
   </div>
 </section>
 
@@ -990,12 +996,13 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat hors UE — tes droits existent, mais sont plus difficiles à faire respecter",
+      tldr:"Tu as des droits sur le papier, mais dans les faits, ta banque est ton meilleur allié.",
       rights:[
-        "Si le vendeur cible activement les consommateurs de l'UE (site traduit, livraison locale, paiement en euros), le droit européen s'applique en théorie.",
-        "En pratique, faire respecter ce droit face à un vendeur situé hors UE est souvent long et complexe.",
-        "Les colis de faible valeur peuvent être soumis à des droits de douane et à la TVA à l'importation selon leur montant."
+        "Si le vendeur vise clairement les clients de l'UE (site traduit, livraison chez toi, prix en euros), le droit européen s'applique en théorie.",
+        "Mais le faire respecter face à un vendeur hors UE reste souvent long et compliqué.",
+        "Des frais de douane peuvent s'ajouter selon la valeur du colis."
       ],
-      contact:"Le recours le plus fiable reste la contestation du paiement (chargeback) auprès de ta banque ou de l'émetteur de ta carte. Tu peux aussi signaler le vendeur à ton autorité nationale de consommation (DGCCRF en France)."
+      contact:"Le plus simple : demande à ta banque d'annuler le paiement. Tu peux aussi signaler le vendeur à la DGCCRF (ou l'équivalent dans ton pays)."
     }
   },
   UK: {
@@ -1010,11 +1017,12 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers le Royaume-Uni",
+      tldr:"Ces règles protègent surtout les achats faits auprès d'un vendeur basé au Royaume-Uni.",
       rights:[
-        "Les protections britanniques s'appliquent surtout aux vendeurs basés ou actifs au Royaume-Uni.",
-        "Face à un vendeur étranger, l'application de ces règles est plus incertaine."
+        "Elles s'appliquent surtout aux vendeurs basés ou actifs au Royaume-Uni.",
+        "Face à un vendeur étranger, elles sont plus difficiles à faire appliquer."
       ],
-      contact:"Priorise la contestation bancaire auprès de ta banque, et documente soigneusement les échanges avec le vendeur."
+      contact:"Demande à ta banque d'annuler le paiement, et garde une trace de tous tes échanges avec le vendeur."
     }
   },
   US: {
@@ -1029,11 +1037,12 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers les États-Unis",
+      tldr:"La règle s'applique en théorie à tout vendeur qui te vise, mais elle est dure à faire respecter à l'étranger.",
       rights:[
-        "La règle FTC s'applique en théorie à tout vendeur qui cible des acheteurs américains, peu importe où il est basé.",
-        "Son application contre un vendeur situé à l'étranger reste toutefois limitée en pratique."
+        "Elle s'applique en théorie à tout vendeur qui cible les acheteurs américains, où qu'il soit basé.",
+        "Mais la faire respecter contre un vendeur étranger reste difficile en pratique."
       ],
-      contact:"La contestation bancaire (chargeback) via ta carte reste le recours le plus rapide et le plus fiable dans ce cas."
+      contact:"Le plus rapide et le plus fiable : demande à ta banque d'annuler le paiement."
     }
   },
   CA: {
@@ -1047,10 +1056,11 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers le Canada",
+      tldr:"Les protections provinciales protègent peu face à un vendeur situé hors du Canada.",
       rights:[
-        "Les protections provinciales s'appliquent difficilement à un vendeur situé hors du Canada."
+        "Elles s'appliquent difficilement à un vendeur situé hors du Canada."
       ],
-      contact:"La contestation bancaire reste le recours le plus accessible pour un litige avec un vendeur étranger."
+      contact:"Ta meilleure option : demande à ta banque d'annuler le paiement."
     }
   },
   AU: {
@@ -1064,10 +1074,11 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers l'Australie",
+      tldr:"La loi australienne peut s'appliquer, mais reste difficile à faire respecter face à un vendeur étranger.",
       rights:[
-        "L'Australian Consumer Law peut s'appliquer si le vendeur cible activement le marché australien, mais son application reste limitée face à un vendeur étranger."
+        "Elle peut s'appliquer si le vendeur vise clairement le marché australien, mais elle reste difficile à faire respecter face à un vendeur étranger."
       ],
-      contact:"Privilégie la contestation bancaire, et signale le vendeur à l'ACCC si nécessaire."
+      contact:"Demande à ta banque d'annuler le paiement, et signale le vendeur à l'ACCC si besoin."
     }
   },
   CN: {
@@ -1081,10 +1092,11 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers un acheteur en Chine",
+      tldr:"Les recours sont flous ici — mieux vaut compter sur la plateforme d'achat et ta banque.",
       rights:[
-        "Les recours pour un acheteur situé en Chine face à un vendeur étranger sont peu documentés et varient fortement."
+        "Les recours pour un acheteur en Chine face à un vendeur étranger sont mal définis et varient beaucoup."
       ],
-      contact:"Privilégie les protections de la plateforme d'achat utilisée, et contacte ta banque pour toute contestation de paiement."
+      contact:"Vérifie d'abord la protection acheteur de la plateforme utilisée, puis contacte ta banque si besoin."
     }
   },
   JP: {
@@ -1099,11 +1111,12 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers le Japon",
+      tldr:"Pas de droit de rétractation légal de toute façon, vendeur japonais ou étranger.",
       rights:[
-        "Les protections japonaises visent avant tout les vendeurs établis au Japon ; leur application face à un vendeur étranger est limitée.",
-        "Aucune rétractation légale n'existe de toute façon pour la vente à distance, qu'elle soit domestique ou internationale."
+        "Les protections japonaises visent surtout les vendeurs basés au Japon.",
+        "De toute façon, il n'existe pas de droit de rétractation légal pour la vente à distance, japonaise ou étrangère."
       ],
-      contact:"Privilégie la contestation bancaire (chargeback) auprès de ta banque ou de l'émetteur de ta carte, recours le plus efficace face à un vendeur situé hors du Japon."
+      contact:"Le plus efficace : demande à ta banque d'annuler le paiement."
     }
   },
   CH: {
@@ -1118,11 +1131,12 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers la Suisse",
+      tldr:"Pas de délai de réflexion légal en Suisse, ni pour un vendeur suisse ni pour un vendeur étranger.",
       rights:[
-        "La Suisse n'étant pas membre de l'UE, les règles européennes de rétractation ne s'appliquent pas automatiquement, même face à un vendeur européen.",
-        "Sans droit de rétractation légal de toute façon, ta marge de manœuvre dépend presque entièrement de la politique commerciale du vendeur."
+        "La Suisse n'étant pas dans l'UE, les règles européennes de rétractation ne s'appliquent pas ici, même face à un vendeur européen.",
+        "De toute façon, il n'existe pas de droit de rétractation légal en Suisse pour ce type d'achat."
       ],
-      contact:"La contestation bancaire (chargeback) reste le recours le plus universel, quel que soit le pays du vendeur."
+      contact:"Le recours le plus universel : demande à ta banque d'annuler le paiement."
     }
   },
   BR: {
@@ -1137,11 +1151,13 @@ const RULES = {
     },
     crossBorder:{
       title:"Achat depuis l'étranger vers un acheteur au Brésil",
+      tldr:"Le droit brésilien peut s'appliquer, mais le faire respecter à l'étranger reste compliqué.",
       rights:[
-        "Le CDC peut s'appliquer si le vendeur cible activement les consommateurs brésiliens (site en portugais, prix en reais, livraison locale), mais le faire respecter face à un vendeur situé à l'étranger reste complexe.",
-        "Des droits de douane et taxes d'importation peuvent s'appliquer aux colis internationaux selon leur valeur."
+        "Il peut s'appliquer si le vendeur vise clairement les clients brésiliens.",
+        "Mais le faire respecter face à un vendeur à l'étranger reste compliqué.",
+        "Des frais de douane peuvent s'ajouter selon la valeur du colis."
       ],
-      contact:"Privilégie la contestation bancaire auprès de ta banque ou de l'émetteur de ta carte, et signale le vendeur à un Procon si besoin."
+      contact:"Demande à ta banque d'annuler le paiement, et signale le vendeur à un Procon si besoin."
     }
   },
   OTHER: {
@@ -1155,11 +1171,12 @@ const RULES = {
     },
     crossBorder:{
       title:"Recours universel — achat international",
+      tldr:"Sans règle connue pour cette combinaison de pays, ta banque reste ton meilleur recours.",
       rights:[
-        "Sans cadre légal spécifique identifié pour cette combinaison de pays, le recours le plus fiable reste la contestation bancaire.",
-        "Les réseaux de cartes (Visa, Mastercard) appliquent des règles de contestation valables dans la plupart des pays, indépendamment du droit local du vendeur."
+        "Sans règle spécifique connue pour cette combinaison de pays, le plus fiable reste la contestation bancaire.",
+        "Visa et Mastercard appliquent des règles de contestation valables dans presque tous les pays, peu importe le droit local du vendeur."
       ],
-      contact:"Contacte ta banque en priorité. Documente soigneusement l'achat et les échanges avec le vendeur."
+      contact:"Contacte ta banque en priorité, et garde une trace de tous tes échanges avec le vendeur."
     }
   }
 };
@@ -1178,6 +1195,7 @@ const rightsPanel = document.getElementById('rights-panel');
 const rpRoute = document.getElementById('rp-route');
 const rpBadge = document.getElementById('rp-badge');
 const rpTitle = document.getElementById('rp-title');
+const rpTldrText = document.getElementById('rp-tldr-text');
 const rpRights = document.getElementById('rp-rights');
 const rpContact = document.getElementById('rp-contact');
 
@@ -1192,6 +1210,7 @@ function showRightsPanel(originId, destId){
   rpBadge.textContent = 'ACHAT INTERNATIONAL';
   rpBadge.className = 'rp-badge crossborder';
   rpTitle.textContent = rule.title;
+  rpTldrText.textContent = rule.tldr || '';
   rpRights.innerHTML = rule.rights.map(r=>`<li>${r}</li>`).join('');
   rpContact.textContent = rule.contact;
 
