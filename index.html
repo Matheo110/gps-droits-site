@@ -490,9 +490,17 @@ function makeStars(count, spread, size, color, opacity){
   const mat = new THREE.PointsMaterial({color, size, transparent:true, opacity, sizeAttenuation:true});
   return new THREE.Points(geo, mat);
 }
-const starsFar = makeStars(700, 30, 0.03, 0xe0a94c, 0.4);
-const starsNear = makeStars(500, 22, 0.02, 0xffffff, 0.5);
-scene.add(starsFar); scene.add(starsNear);
+const starsDeep = makeStars(3200, 55, 0.018, 0xffffff, 0.35);
+const starsFar = makeStars(2200, 34, 0.03, 0xe0a94c, 0.45);
+const starsMid = makeStars(1400, 26, 0.024, 0xffffff, 0.55);
+const starsNear = makeStars(900, 20, 0.02, 0xffffff, 0.7);
+scene.add(starsDeep); scene.add(starsFar); scene.add(starsMid); scene.add(starsNear);
+
+// léger scintillement — l'opacité de chaque étoile respire doucement
+[starsDeep, starsFar, starsMid, starsNear].forEach((layer, i)=>{
+  layer.userData.baseOpacity = layer.material.opacity;
+  layer.userData.twinklePhase = i*1.7;
+});
 
 let mouseParallaxX = 0, mouseParallaxY = 0;
 window.addEventListener('mousemove', e=>{
@@ -822,11 +830,22 @@ function animate(t){
   globeGroup.rotation.y = rotY;
   globeGroup.rotation.x = rotX;
 
+  starsDeep.rotation.y += 0.00003;
+  starsDeep.position.x += (mouseParallaxX*0.18 - starsDeep.position.x)*0.02;
+  starsDeep.position.y += (-mouseParallaxY*0.12 - starsDeep.position.y)*0.02;
   starsFar.rotation.y += 0.00006;
   starsFar.position.x += (mouseParallaxX*0.35 - starsFar.position.x)*0.02;
   starsFar.position.y += (-mouseParallaxY*0.25 - starsFar.position.y)*0.02;
+  starsMid.rotation.y += 0.00009;
+  starsMid.position.x += (mouseParallaxX*0.5 - starsMid.position.x)*0.02;
+  starsMid.position.y += (-mouseParallaxY*0.4 - starsMid.position.y)*0.02;
   starsNear.position.x += (mouseParallaxX*0.7 - starsNear.position.x)*0.02;
   starsNear.position.y += (-mouseParallaxY*0.55 - starsNear.position.y)*0.02;
+
+  [starsDeep, starsFar, starsMid, starsNear].forEach(layer=>{
+    const tw = (Math.sin(t*0.0006 + layer.userData.twinklePhase)+1)/2;
+    layer.material.opacity = layer.userData.baseOpacity * (0.75 + tw*0.25);
+  });
 
   cameraZ += (cameraTargetZ-cameraZ)*0.045;
   const driftZ = Math.sin(t*0.00022)*0.3;
