@@ -1021,7 +1021,7 @@ function animate(t){
   const driftZ = Math.sin(t*0.00022)*0.3;
   camera.position.z = cameraZ + driftZ;
   camera.position.x += (mouseParallaxX*0.5 - camera.position.x)*0.02;
-  camera.lookAt(0,1.9,0);
+  camera.lookAt(0,3.0,0);
   if(!sliderDragging) zoomSlider.value = zToSlider(cameraTargetZ);
 
   cloudMesh.rotation.y += 0.0006;
