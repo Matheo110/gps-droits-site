@@ -706,12 +706,13 @@ const nebulaSprites = NEBULA_CONFIGS.map(cfg=>{
 
 // étoiles filantes occasionnelles — un trait lumineux qui traverse le ciel
 // de temps en temps, désactivé si l'utilisateur préfère moins d'animation.
-let shootingStar = null;
+let shootingStars = [];
+const MAX_SHOOTING_STARS = 4;
 function spawnShootingStar(){
-  if(shootingStar) return;
-  const startX = -22 - Math.random()*10;
-  const startY = 8 + Math.random()*9;
-  const startZ = (Math.random()-0.5)*30 - 12;
+  if(shootingStars.length >= MAX_SHOOTING_STARS) return;
+  const startX = -24 - Math.random()*12;
+  const startY = 7 + Math.random()*10;
+  const startZ = (Math.random()-0.5)*32 - 12;
   const dir = new THREE.Vector3(1.5+Math.random()*0.5, -0.9-Math.random()*0.3, (Math.random()-0.5)*0.3).normalize();
   const tailPts = [new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(-2.2)];
   const geo = new THREE.BufferGeometry().setFromPoints(tailPts);
@@ -719,10 +720,10 @@ function spawnShootingStar(){
   const line = new THREE.Line(geo, mat);
   line.position.set(startX, startY, startZ);
   scene.add(line);
-  shootingStar = {mesh:line, dir, t:0};
+  shootingStars.push({mesh:line, dir, t: -Math.random()*0.3});
 }
 if(!REDUCED_MOTION){
-  setInterval(()=>{ if(Math.random()<0.55) spawnShootingStar(); }, 4600);
+  setInterval(()=>{ if(Math.random()<0.85) spawnShootingStar(); }, 1400);
 }
 
 let mouseParallaxX = 0, mouseParallaxY = 0;
@@ -1100,15 +1101,19 @@ function animate(t){
     });
   }
 
-  if(shootingStar){
-    shootingStar.t += 0.018;
-    shootingStar.mesh.position.addScaledVector(shootingStar.dir, 0.5);
-    shootingStar.mesh.material.opacity = Math.max(0, 0.95*(1-shootingStar.t));
-    if(shootingStar.t >= 1){
-      scene.remove(shootingStar.mesh);
-      shootingStar.mesh.geometry.dispose();
-      shootingStar.mesh.material.dispose();
-      shootingStar = null;
+  if(shootingStars.length){
+    for(let i = shootingStars.length-1; i>=0; i--){
+      const s = shootingStars[i];
+      s.t += 0.018;
+      if(s.t <= 0) continue; // délai avant apparition
+      s.mesh.position.addScaledVector(s.dir, 0.5);
+      s.mesh.material.opacity = Math.max(0, 0.95*(1-s.t));
+      if(s.t >= 1){
+        scene.remove(s.mesh);
+        s.mesh.geometry.dispose();
+        s.mesh.material.dispose();
+        shootingStars.splice(i,1);
+      }
     }
   }
 
