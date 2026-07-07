@@ -661,31 +661,42 @@ scene.add(starsHaze); scene.add(starsDeep); scene.add(starsFar); scene.add(stars
   layer.userData.twinklePhase = i*1.4;
 });
 
-// nébuleuses discrètes en arrière-plan — halos colorés doux, reprenant la
-// palette du site (turquoise / or / rose), pour donner du relief au ciel.
-function makeGlowTexture(colorHex){
-  const size = 160;
+// nébuleuses discrètes en arrière-plan — nuages de gaz irréguliers et très
+// diffus (comme sur de vraies photos d'espace), pas des ronds colorés nets.
+function makeNebulaTexture(colorHex, seed){
+  const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const c = new THREE.Color(colorHex);
   const rgb = `${Math.round(c.r*255)},${Math.round(c.g*255)},${Math.round(c.b*255)}`;
-  const grd = ctx.createRadialGradient(size/2,size/2,0, size/2,size/2, size/2);
-  grd.addColorStop(0, `rgba(${rgb},0.5)`);
-  grd.addColorStop(0.45, `rgba(${rgb},0.16)`);
-  grd.addColorStop(1, `rgba(${rgb},0)`);
-  ctx.fillStyle = grd;
-  ctx.fillRect(0,0,size,size);
+  ctx.globalCompositeOperation = 'lighter';
+  let rnd = seed;
+  const rand = ()=>{ rnd = (rnd*9301+49297)%233280; return rnd/233280; };
+  const blobCount = 9 + Math.floor(rand()*5);
+  for(let i=0;i<blobCount;i++){
+    const bx = size*(0.28+rand()*0.44);
+    const by = size*(0.28+rand()*0.44);
+    const br = size*(0.14+rand()*0.2);
+    const a = 0.045 + rand()*0.06;
+    const grd = ctx.createRadialGradient(bx,by,0,bx,by,br);
+    grd.addColorStop(0, `rgba(${rgb},${a})`);
+    grd.addColorStop(0.6, `rgba(${rgb},${a*0.35})`);
+    grd.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(bx,by,br,0,Math.PI*2);
+    ctx.fill();
+  }
   return new THREE.CanvasTexture(canvas);
 }
 const NEBULA_CONFIGS = [
-  {color:0x2dd4bf, pos:[-15,7,-32], scale:24, opacity:0.4},
-  {color:0xe0a94c, pos:[17,-9,-36], scale:28, opacity:0.35},
-  {color:0xef6461, pos:[-5,-13,-42], scale:19, opacity:0.28},
-  {color:0x2dd4bf, pos:[9,13,-46], scale:20, opacity:0.22},
+  {color:0x2dd4bf, pos:[-17,8,-34], scale:34, opacity:0.28, seed:11},
+  {color:0xe0a94c, pos:[19,-10,-40], scale:38, opacity:0.22, seed:47},
+  {color:0xef6461, pos:[-6,-15,-46], scale:26, opacity:0.16, seed:83},
 ];
 const nebulaSprites = NEBULA_CONFIGS.map(cfg=>{
-  const mat = new THREE.SpriteMaterial({map:makeGlowTexture(cfg.color), transparent:true, opacity:cfg.opacity, depthWrite:false, blending:THREE.AdditiveBlending});
+  const mat = new THREE.SpriteMaterial({map:makeNebulaTexture(cfg.color, cfg.seed), transparent:true, opacity:cfg.opacity, depthWrite:false, blending:THREE.NormalBlending});
   const sprite = new THREE.Sprite(mat);
   sprite.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
   sprite.scale.set(cfg.scale, cfg.scale, 1);
