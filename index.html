@@ -96,10 +96,10 @@
 
   /* ---------- hero / globe ---------- */
   .hero{
-    position:relative; width:100%; height:100vh; min-height:700px;
+    position:relative; width:100%; height:124vh; min-height:860px;
     display:flex; align-items:center; justify-content:center; overflow:hidden;
   }
-  @media (max-width:720px){ .hero{height:100vh; min-height:640px;} }
+  @media (max-width:720px){ .hero{height:132vh; min-height:760px;} }
   #globe-canvas{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab;}
   #globe-canvas.dragging{cursor:grabbing;}
 
@@ -777,7 +777,7 @@ function sizeRenderer(){
 }
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-let CAMERA_REST_Z = 11.8;
+const CAMERA_REST_Z = 10.4;
 camera.position.set(0, 0.5, 14);
 let cameraZ = 14, cameraTargetZ = CAMERA_REST_Z;
 
@@ -1315,19 +1315,19 @@ function onZonePicked(zoneId){
   if(!selection.origin){
     selection.origin = zoneId;
     setPinColor(zoneId, 0x2dd4bf);
-    cameraTargetZ = Math.max(ZOOM_MIN_Z, 6.6);
+    cameraTargetZ = 6.6;
   } else if(!selection.dest && zoneId !== selection.origin){
     selection.dest = zoneId;
     setPinColor(zoneId, 0xe0a94c);
     drawArc(selection.origin, selection.dest);
     showRightsPanel(selection.origin, selection.dest);
-    cameraTargetZ = Math.max(ZOOM_MIN_Z, 5.8);
+    cameraTargetZ = 5.8;
   } else {
     resetPins(); clearArc();
     selection = {origin: zoneId, dest:null};
     setPinColor(zoneId, 0x2dd4bf);
     closeRightsPanel();
-    cameraTargetZ = Math.max(ZOOM_MIN_Z, 6.6);
+    cameraTargetZ = 6.6;
   }
 }
 
@@ -1340,55 +1340,12 @@ function resetCheckpoint(){
    ZOOM — molette de la souris, pincement tactile, boutons +/–
    et petite barre verticale, tous synchronisés.
 ============================================================ */
-let ZOOM_MIN_Z = 11.0;   // le plus proche — recalculé selon l'écran pour que la sphère ne soit jamais coupée
+const ZOOM_MIN_Z = 4.4;  // le plus proche
 const ZOOM_MAX_Z = 17;   // le plus loin
 const zoomSlider = document.getElementById('zoom-slider');
 const zoomInBtn = document.getElementById('zoom-in');
 const zoomOutBtn = document.getElementById('zoom-out');
 let sliderDragging = false;
-
-// Calcule, pour le ratio d'écran actuel, la distance minimale de caméra en-dessous de
-// laquelle la sphère commencerait à dépasser du cadre (donc à être "coupée"). On teste
-// une caméra de test avec plusieurs points échantillonnés sur la sphère et on cherche
-// par dichotomie la distance la plus proche qui garde tous ces points à l'intérieur du cadre.
-const __zoomTestCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-function computeSafeMinZ(aspect, tiltY, targetMax){
-  function maxNdcAt(d){
-    __zoomTestCamera.aspect = aspect;
-    __zoomTestCamera.position.set(0, 0.5, d);
-    __zoomTestCamera.lookAt(0, tiltY, 0);
-    __zoomTestCamera.updateProjectionMatrix();
-    __zoomTestCamera.updateMatrixWorld();
-    const vp = new THREE.Matrix4().multiplyMatrices(__zoomTestCamera.projectionMatrix, __zoomTestCamera.matrixWorldInverse);
-    let maxAbs = 0;
-    const N = 240;
-    for(let i=0;i<N;i++){
-      const phi = Math.acos(1 - 2*(i+0.5)/N);
-      const theta = Math.PI*(1+Math.sqrt(5))*(i+0.5);
-      const x = R*Math.sin(phi)*Math.cos(theta);
-      const y = R*Math.sin(phi)*Math.sin(theta);
-      const z = R*Math.cos(phi);
-      const p = new THREE.Vector4(x,y,z,1).applyMatrix4(vp);
-      if(p.w<=0) continue;
-      maxAbs = Math.max(maxAbs, Math.abs(p.x/p.w), Math.abs(p.y/p.w));
-    }
-    return maxAbs;
-  }
-  let lo=2, hi=30;
-  for(let i=0;i<24;i++){
-    const mid=(lo+hi)/2;
-    if(maxNdcAt(mid) <= targetMax) hi=mid; else lo=mid;
-  }
-  return hi;
-}
-function recalcZoomBounds(){
-  const aspect = camera.aspect || 1;
-  const floor = computeSafeMinZ(aspect, 2.0, 0.97); // marge de sécurité de 3%
-  ZOOM_MIN_Z = +floor.toFixed(2);
-  CAMERA_REST_Z = +(ZOOM_MIN_Z * 1.07).toFixed(2);
-  if(cameraTargetZ < ZOOM_MIN_Z) cameraTargetZ = ZOOM_MIN_Z;
-  if(cameraZ < ZOOM_MIN_Z) cameraZ = ZOOM_MIN_Z;
-}
 
 function zToSlider(z){ return Math.round((1 - (z-ZOOM_MIN_Z)/(ZOOM_MAX_Z-ZOOM_MIN_Z)) * 100); }
 function sliderToZ(v){ return ZOOM_MAX_Z - (v/100)*(ZOOM_MAX_Z-ZOOM_MIN_Z); }
@@ -1503,7 +1460,7 @@ function animate(t){
   const driftZ = Math.sin(t*0.00022)*0.3;
   camera.position.z = cameraZ + driftZ;
   camera.position.x += (mouseParallaxX*0.5 - camera.position.x)*0.02;
-  camera.lookAt(0,2.0,0);
+  camera.lookAt(0,2.4,0);
   if(!sliderDragging) zoomSlider.value = zToSlider(cameraTargetZ);
 
   cloudMesh.rotation.y += 0.0006;
@@ -1541,11 +1498,8 @@ function animate(t){
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
-window.addEventListener('resize', ()=>{ sizeRenderer(); recalcZoomBounds(); });
+window.addEventListener('resize', sizeRenderer);
 sizeRenderer();
-recalcZoomBounds();
-cameraTargetZ = CAMERA_REST_Z;
-cameraZ = CAMERA_REST_Z;
 setTimeout(()=>{ cameraTargetZ = CAMERA_REST_Z; }, 300);
 requestAnimationFrame(animate);
 
