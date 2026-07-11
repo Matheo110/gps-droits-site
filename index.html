@@ -732,6 +732,7 @@
 <button class="scroll-top" id="scroll-top" aria-label="Retour en haut">↑</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <script>
 /* ============================================================
    GLOBE 3D INTERACTIF — clique un pays, puis un autre, pour
@@ -944,6 +945,38 @@ function latLonToVec3(lat, lon, radius){
     radius*Math.sin(phi)*Math.sin(theta)
   );
 }
+
+/* ============================================================
+   FRONTIÈRES DES PAYS — fines lignes tracées par-dessus le globe
+   pour bien délimiter chaque pays (données Natural Earth 110m,
+   via le pack npm "world-atlas", version épinglée et stable).
+============================================================ */
+const BORDER_TARGET_OPACITY = 0.32;
+const borderGroup = new THREE.Group();
+globeGroup.add(borderGroup);
+const borderMat = new THREE.LineBasicMaterial({ color: 0x2dd4bf, transparent: true, opacity: 0 });
+let bordersLoaded = false;
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(res => res.json())
+  .then(topology => {
+    if(typeof topojson === 'undefined') return;
+    const geo = topojson.feature(topology, topology.objects.countries);
+    const R_BORDER = R * 1.002;
+    geo.features.forEach(feature => {
+      const geom = feature.geometry;
+      if(!geom) return;
+      const polygons = geom.type === 'Polygon' ? [geom.coordinates] : (geom.type === 'MultiPolygon' ? geom.coordinates : []);
+      polygons.forEach(polygon => {
+        polygon.forEach(ring => {
+          const points = ring.map(([lon, lat]) => latLonToVec3(lat, lon, R_BORDER));
+          const ringGeo = new THREE.BufferGeometry().setFromPoints(points);
+          borderGroup.add(new THREE.LineLoop(ringGeo, borderMat));
+        });
+      });
+    });
+    bordersLoaded = true;
+  })
+  .catch(()=>{ /* pas de frontières si le CDN est injoignable — le globe reste utilisable */ });
 
 const ZONES = [
   {id:'EU', label:'Union Européenne', lat:50, lon:15},
@@ -1269,6 +1302,9 @@ function animate(t){
   if(earthLoaded && sphereMat.opacity < 1){
     sphereMat.opacity += (1-sphereMat.opacity)*0.06;
     cloudMesh.material.opacity += (CLOUD_OPACITY-cloudMesh.material.opacity)*0.06;
+  }
+  if(bordersLoaded && borderMat.opacity < BORDER_TARGET_OPACITY){
+    borderMat.opacity += (BORDER_TARGET_OPACITY-borderMat.opacity)*0.06;
   }
 
   pinGroup.children.forEach(g=>{
