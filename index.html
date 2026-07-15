@@ -965,14 +965,6 @@ if(!REDUCED_MOTION && window.gsap && window.ScrollTrigger){
    TRANSITIONS CINÉMATIQUES ENTRE SECTIONS AU SCROLL
 ============================================================ */
 if(!REDUCED_MOTION && window.gsap && window.ScrollTrigger){
-  // sortie du hero : fondu / flou / léger recul en scrollant vers la 1ère section
-  const heroSectionEl = document.getElementById('globe-anchor');
-  if(heroSectionEl){
-    gsap.to(heroSectionEl, {
-      opacity:0.2, scale:0.95, filter:'blur(4px)', ease:'none',
-      scrollTrigger:{ trigger: heroSectionEl, start:'top top', end:'bottom top', scrub:0.8 }
-    });
-  }
   // balayage lumineux qui traverse chaque section à l'entrée — renforce la sensation de transition de "scène"
   document.querySelectorAll('section').forEach(sec=>{
     if(sec.querySelector(':scope > .section-spotlight')) return;
@@ -985,6 +977,8 @@ if(!REDUCED_MOTION && window.gsap && window.ScrollTrigger){
       scrollTrigger:{ trigger: sec, start:'top 75%', end:'top 25%', scrub:0.7 }
     });
   });
+  // filet de sécurité : recalcule les positions de déclenchement une fois que tout (polices, images, layout) est stable
+  window.addEventListener('load', ()=>{ setTimeout(()=> ScrollTrigger.refresh(), 150); });
 }
 
 if(!REDUCED_MOTION && !IS_TOUCH && window.gsap){
